@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Menu, Book, Plus, Settings as SettingsIcon } from "lucide-react";
 
-const NavigationLink = ({ href, icon: Icon, children }: { href: string, icon: any, children: React.ReactNode }) => {
+const NavigationLink = ({ href, icon: Icon, children, onNavigate }: { href: string, icon: any, children: React.ReactNode, onNavigate?: () => void }) => {
   const [location] = useLocation();
   const isActive = location === href;
 
@@ -13,6 +13,7 @@ const NavigationLink = ({ href, icon: Icon, children }: { href: string, icon: an
       <Button
         variant={isActive ? "default" : "ghost"}
         className="w-full justify-start text-lg"
+        onClick={() => onNavigate?.()}
       >
         <Icon className="h-5 w-5 mr-2" />
         {children}
@@ -36,13 +37,13 @@ export function Navigation() {
           </SheetTrigger>
           <SheetContent side="left" className="w-64">
             <nav className="flex flex-col gap-2 mt-4">
-              <NavigationLink href="/" icon={Plus}>
+              <NavigationLink href="/" icon={Plus} onNavigate={() => setOpen(false)}>
                 Create Story
               </NavigationLink>
-              <NavigationLink href="/saved" icon={Book}>
+              <NavigationLink href="/saved" icon={Book} onNavigate={() => setOpen(false)}>
                 Saved Stories
               </NavigationLink>
-              <NavigationLink href="/settings" icon={SettingsIcon}>
+              <NavigationLink href="/settings" icon={SettingsIcon} onNavigate={() => setOpen(false)}>
                 Settings
               </NavigationLink>
             </nav>
