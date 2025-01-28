@@ -167,34 +167,20 @@ export default function MyVocab() {
         ) : (
           <>
             <h2 className="text-lg font-medium mb-2">My Decks:</h2>
-            <Tabs 
-              value={selectedTab || decks?.[0]?.id?.toString()} 
+            <Tabs
+              value={selectedTab || decks?.[0]?.id?.toString()}
               onValueChange={setSelectedTab}
             >
               <TabsList className="relative w-full mb-4 overflow-hidden">
                 <div className="overflow-x-auto flex [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {decks?.map((deck) => (
-                    <div key={deck.id} className="flex items-center gap-1">
-                      <TabsTrigger
-                        value={deck.id.toString()}
-                        className="shrink-0"
-                      >
-                        {deck.name}
-                      </TabsTrigger>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteConfirmation({
-                          isOpen: true,
-                          deckId: deck.id,
-                          vocabId: null,
-                        })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete deck</span>
-                      </Button>
-                    </div>
+                    <TabsTrigger
+                      key={deck.id}
+                      value={deck.id.toString()}
+                      className="shrink-0"
+                    >
+                      {deck.name}
+                    </TabsTrigger>
                   ))}
                 </div>
               </TabsList>
@@ -257,6 +243,21 @@ export default function MyVocab() {
                         </Card>
                       </div>
                     ))}
+                  </div>
+                  {/* Delete Deck Button */}
+                  <div className="mt-8 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      className="w-full text-destructive hover:text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => setDeleteConfirmation({
+                        isOpen: true,
+                        deckId: deck.id,
+                        vocabId: null,
+                      })}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Deck
+                    </Button>
                   </div>
                 </TabsContent>
               ))}
