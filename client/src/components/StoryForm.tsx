@@ -11,7 +11,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { GeneratedStory } from "./GeneratedStory";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { StoryFormData, StoryResponse } from "@/lib/types";
 
 const formSchema = z.object({
@@ -36,6 +36,38 @@ export function StoryForm() {
       readingLevel: "",
       wordCount: 250,
       additionalContext: "",
+    },
+  });
+
+  const generateFormData = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/generate-form", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate form data");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      form.setValue("setting", data.setting);
+      form.setValue("characterName", data.characterName);
+      form.setValue("additionalCharacters", data.additionalCharacters);
+      form.setValue("additionalContext", data.additionalContext);
+      toast({
+        title: "Form filled with AI",
+        description: "The form has been filled with AI-generated content.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate form data. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -92,6 +124,25 @@ export function StoryForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Button
+          type="button"
+          onClick={() => generateFormData.mutate()}
+          disabled={generateFormData.isPending}
+          className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg hover:shadow-indigo-500/25 transition-all duration-200"
+        >
+          {generateFormData.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Filling form...
+            </>
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Fill out with AI
+            </>
+          )}
+        </Button>
+
         <FormField
           control={form.control}
           name="setting"
@@ -99,7 +150,7 @@ export function StoryForm() {
             <FormItem>
               <FormLabel>Story Setting</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., A magical forest, A busy city..." {...field} />
+                <Input placeholder="e.g., busy cafe, city park..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

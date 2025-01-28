@@ -8,6 +8,51 @@ if (!process.env.OPENAI_API_KEY) {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+export async function generateFormData(): Promise<Partial<StoryFormData>> {
+  const prompt = `
+    Generate a story setup with these constraints:
+    1. The setting must be modern/contemporary (no fantasy or historical settings)
+    2. The setting must be 3 words or less
+    3. The character names should be modern and realistic
+    4. No supernatural or fantasy elements
+
+    Respond with a JSON object in this format:
+    {
+      "setting": "string (max 3 words)",
+      "characterName": "string",
+      "additionalCharacters": "string (2-3 names)",
+      "additionalContext": "string (1-2 sentences of context)"
+    }
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a writing assistant that generates contemporary story setups. Always use modern settings and realistic character names.",
+        },
+        { 
+          role: "user", 
+          content: prompt 
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    if (!response.choices[0].message.content) {
+      throw new Error("No content in OpenAI response");
+    }
+
+    return JSON.parse(response.choices[0].message.content);
+  } catch (error: any) {
+    console.error("Error generating form data:", error);
+    throw error;
+  }
+}
+
 export async function generateStory(data: StoryFormData): Promise<StoryResponse> {
   const prompt = `
     As a creative writing assistant, create a story in ${data.language || "English"} with these parameters:
@@ -28,8 +73,6 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
   `;
 
   try {
-    console.log("Sending request to OpenAI API...");
-
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [

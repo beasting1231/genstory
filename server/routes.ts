@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { generateStory } from "./lib/openai";
+import { generateStory, generateFormData } from "./lib/openai";
 import { db } from "@db";
 import { stories } from "@db/schema";
 
@@ -13,6 +13,16 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error generating story:", error);
       res.status(500).json({ message: "Failed to generate story" });
+    }
+  });
+
+  app.post("/api/generate-form", async (_req, res) => {
+    try {
+      const formData = await generateFormData();
+      res.json(formData);
+    } catch (error) {
+      console.error("Error generating form data:", error);
+      res.status(500).json({ message: "Failed to generate form data" });
     }
   });
 
