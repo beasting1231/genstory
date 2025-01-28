@@ -6,7 +6,7 @@ if (!process.env.OPENROUTER_API_KEY) {
 
 export async function generateStory(data: StoryFormData): Promise<StoryResponse> {
   const prompt = `
-    Create a story with the following parameters:
+    As a creative writing assistant, create a story with these parameters:
     - Setting: ${data.setting}
     - Main character: ${data.characterName}
     - Additional characters: ${data.additionalCharacters || "None"}
@@ -14,23 +14,33 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
     - Target word count: ${data.wordCount}
     - Additional context: ${data.additionalContext || "None"}
 
-    The story should be appropriate for the specified reading level (${data.readingLevel}):
-    - A1: Very simple vocabulary and grammar
-    - A2: Basic vocabulary and simple present tense
-    - B1: Intermediate vocabulary and mixed tenses
-    - B2: Advanced vocabulary and complex sentences
-    - C1: Rich vocabulary and idiomatic expressions
-    - C2: Native-level complexity
+    The story should be appropriate for reading level ${data.readingLevel}.
 
-    Return a JSON object with exactly two fields:
+    Structure your response in this exact JSON format:
     {
-      "title": "The story title",
-      "content": "The full story content"
+      "title": "A creative title for the story",
+      "content": "The complete story text"
     }
   `;
 
   try {
     console.log("Sending request to OpenRouter API...");
+    console.log("Request payload:", {
+      model: "google/gemini-2.0-flash-thinking-exp:free",
+      messages: [
+        {
+          role: "system",
+          content: "You are a creative writing assistant. Always respond with a JSON object containing exactly two fields: 'title' and 'content'. The title should be a creative name for the story, and the content should be the complete story text."
+        },
+        { 
+          role: "user", 
+          content: prompt 
+        }
+      ],
+      temperature: 0.8,
+      max_tokens:2000
+    });
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -40,19 +50,19 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
         "X-Title": "AI Graded Reader Generator"
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-r1",
+        model: "google/gemini-2.0-flash-thinking-exp:free",
         messages: [
           {
             role: "system",
-            content: "You are a creative writing assistant that creates engaging and level-appropriate stories based on user parameters. Always return stories in JSON format with 'title' and 'content' fields. Ensure the vocabulary and grammar complexity matches the requested reading level."
+            content: "You are a creative writing assistant. Always respond with a JSON object containing exactly two fields: 'title' and 'content'. The title should be a creative name for the story, and the content should be the complete story text."
           },
           { 
             role: "user", 
             content: prompt 
           }
         ],
-        temperature: 0.7,
-        format: "json"
+        temperature: 0.8,
+        max_tokens: 2000
       })
     });
 
@@ -63,31 +73,38 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
     }
 
     const result = await response.json();
-    console.log("OpenRouter API response:", JSON.stringify(result, null, 2));
+    console.log("OpenRouter API raw response:", JSON.stringify(result, null, 2));
 
     if (!result.choices?.[0]?.message?.content) {
+      console.error("Invalid response structure:", result);
       throw new Error("Invalid response format from OpenRouter API");
     }
 
     let parsedContent: StoryResponse;
     try {
       const content = result.choices[0].message.content;
-      console.log("Attempting to parse content:", content);
+      console.log("Raw content from API:", content);
 
-      // If content is already an object, use it directly
+      // Handle both string and object responses
       parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
 
       if (!parsedContent.title || !parsedContent.content) {
+        console.error("Missing required fields in response:", parsedContent);
         throw new Error("Missing required fields in story response");
       }
+
+      console.log("Successfully parsed story:", {
+        title: parsedContent.title,
+        contentLength: parsedContent.content.length
+      });
     } catch (error: any) {
-      console.error("Parse error:", error);
+      console.error("Parse error:", error, "Content:", result.choices[0].message.content);
       throw new Error("Failed to parse story response: " + error.message);
     }
 
     return parsedContent;
   } catch (error: any) {
-    console.error("Error details:", error);
+    console.error("Error generating story:", error);
     throw error;
   }
 }
