@@ -179,6 +179,9 @@ export default function MyVocab() {
                             <p className="text-xl font-bold text-left">
                               {index + 1}. {item.word}
                             </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {item.translation}
+                            </p>
                           </CardContent>
                         </Card>
                       </div>
