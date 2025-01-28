@@ -38,6 +38,42 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
     }
   }, [wordToEdit]);
 
+  const autofillWord = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/word-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get word information");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setTranslation(data.translation);
+      if (data.partOfSpeech) {
+        setPartOfSpeech(data.partOfSpeech.toLowerCase());
+      }
+      if (data.context) {
+        setContext(data.context);
+      }
+      toast({
+        title: "Success",
+        description: "Word information filled automatically",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to get word information. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const addOrUpdateWord = useMutation({
     mutationFn: async () => {
       const method = wordToEdit ? "PUT" : "POST";
