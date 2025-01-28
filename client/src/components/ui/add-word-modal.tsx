@@ -132,7 +132,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
             />
             <Button
               variant="secondary"
-              className="w-full hover:bg-secondary/80 focus-visible:ring-1 focus-visible:ring-ring"
+              className="w-full hover:bg-secondary/80 focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
               onClick={() => autofillWord.mutate()}
               disabled={!word || autofillWord.isPending}
             >
