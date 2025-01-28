@@ -7,6 +7,7 @@ if (!process.env.OPENAI_API_KEY) {
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function generateStory(data: StoryFormData): Promise<StoryResponse> {
   const prompt = `
     As a creative writing assistant, create a story with these parameters:
@@ -30,7 +31,7 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
     console.log("Sending request to OpenAI API...");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
