@@ -25,7 +25,7 @@ export default function StudyDeck({ params }: StudyDeckProps) {
   const deck = decks?.find(d => d.id === parseInt(params.deckId));
   const vocabulary = deck?.vocabulary || [];
   const currentWord = vocabulary[currentIndex];
-  const hasNextWord = currentIndex < vocabulary.length - 1;
+  const isDeckCompleted = currentIndex >= vocabulary.length;
 
   const onDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 100;
@@ -35,16 +35,14 @@ export default function StudyDeck({ params }: StudyDeckProps) {
     if (Math.abs(swipe) > threshold || velocity > 800) {
       setDirection(swipe > 0 ? "right" : "left");
       setTimeout(() => {
-        if (hasNextWord) {
-          setCurrentIndex(prev => prev + 1);
-          setIsFlipped(false);
-          setDirection(null);
-        }
+        setCurrentIndex(prev => prev + 1);
+        setIsFlipped(false);
+        setDirection(null);
       }, 200);
     }
   };
 
-  if (!currentWord) {
+  if (!currentWord && !isDeckCompleted) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
@@ -59,6 +57,48 @@ export default function StudyDeck({ params }: StudyDeckProps) {
           <Card className="p-8 text-center">
             <p className="text-lg mb-4">No words in this deck!</p>
             <Button onClick={() => setLocation("/vocab")}>Return to Decks</Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDeckCompleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            className="mb-6"
+            onClick={() => setLocation("/vocab")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Decks
+          </Button>
+          <Card className="p-8 text-center">
+            <h2 className="text-2xl font-bold mb-4">🎉 All Done!</h2>
+            <p className="text-muted-foreground mb-6">
+              You've completed studying all words in this deck.
+            </p>
+            <div className="space-y-4">
+              <Button 
+                onClick={() => {
+                  setCurrentIndex(0);
+                  setIsFlipped(false);
+                  setDirection(null);
+                }}
+                className="w-full"
+              >
+                Study Again
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation("/vocab")}
+                className="w-full"
+              >
+                Return to Decks
+              </Button>
+            </div>
           </Card>
         </div>
       </div>
