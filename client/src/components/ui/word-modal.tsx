@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Save, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +20,7 @@ interface WordModalProps {
   context?: string;
   isOpen: boolean;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
 export function WordModal({
@@ -30,6 +30,7 @@ export function WordModal({
   context,
   isOpen,
   onClose,
+  isLoading = false,
 }: WordModalProps) {
   const { toast } = useToast();
   const [selectedDeckId, setSelectedDeckId] = useState<string>("");
@@ -85,20 +86,40 @@ export function WordModal({
             <DialogTitle className="text-2xl font-bold capitalize">{word}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div>
-              <span className="font-medium">Translation:</span>
-              <p className="mt-1">{translation}</p>
-            </div>
-            <div>
-              <span className="font-medium">Part of Speech:</span>
-              <p className="mt-1 capitalize">{partOfSpeech}</p>
-            </div>
-            {context && (
-              <div>
-                <span className="font-medium">Context:</span>
-                <p className="mt-1 text-sm italic">"{context}"</p>
+            <Button
+              type="button"
+              onClick={() => saveToVocab.mutate()}
+              disabled={!selectedDeckId || saveToVocab.isPending || isLoading}
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save to My Vocab
+            </Button>
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="h-4 bg-muted animate-pulse rounded w-3/4"></div>
+                <div className="h-4 bg-muted animate-pulse rounded w-1/2"></div>
+                <div className="h-4 bg-muted animate-pulse rounded w-2/3"></div>
               </div>
+            ) : (
+              <>
+                <div>
+                  <span className="font-medium">Translation:</span>
+                  <p className="mt-1">{translation}</p>
+                </div>
+                <div>
+                  <span className="font-medium">Part of Speech:</span>
+                  <p className="mt-1 capitalize">{partOfSpeech}</p>
+                </div>
+                {context && (
+                  <div>
+                    <span className="font-medium">Context:</span>
+                    <p className="mt-1 text-sm italic">"{context}"</p>
+                  </div>
+                )}
+              </>
             )}
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Select Deck</span>
@@ -114,6 +135,7 @@ export function WordModal({
               <Select
                 value={selectedDeckId}
                 onValueChange={setSelectedDeckId}
+                disabled={isLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a deck" />
@@ -128,17 +150,6 @@ export function WordModal({
               </Select>
             </div>
           </div>
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              onClick={() => saveToVocab.mutate()}
-              disabled={!selectedDeckId || saveToVocab.isPending}
-              className="w-full"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save to Deck
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

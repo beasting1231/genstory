@@ -32,6 +32,7 @@ export function GeneratedStory({ story, readingLevel, wordCount, hideActions = f
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [selectedWord, setSelectedWord] = useState<WordInfo | null>(null);
   const [showWordModal, setShowWordModal] = useState(false);
+  const [wordInfoLoading, setWordInfoLoading] = useState(false);
   const [refreshingIndex, setRefreshingIndex] = useState<number | null>(null);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
     const matches = story.content.match(/(?:[^.!?"]+|"[^"]*"[^.!?]*)+[.!?]+/g) || [];
@@ -118,6 +119,14 @@ export function GeneratedStory({ story, readingLevel, wordCount, hideActions = f
   const handleWordClick = useCallback((word: string, context: string) => {
     const cleanWord = word.replace(/[^\p{L}']/gu, '').trim();
     if (cleanWord) {
+      setWordInfoLoading(true);
+      setSelectedWord({
+        word: cleanWord,
+        translation: '',
+        partOfSpeech: '',
+        context: context
+      });
+      setShowWordModal(true);
       console.log('Clicked word:', cleanWord);
       getWordInfo.mutate({ word: cleanWord, context });
     }
@@ -172,9 +181,10 @@ export function GeneratedStory({ story, readingLevel, wordCount, hideActions = f
     },
     onSuccess: (data) => {
       setSelectedWord(data);
-      setShowWordModal(true);
+      setWordInfoLoading(false);
     },
     onError: () => {
+      setWordInfoLoading(false);
       toast({
         title: "Error",
         description: "Failed to get word information",
@@ -361,7 +371,9 @@ export function GeneratedStory({ story, readingLevel, wordCount, hideActions = f
           onClose={() => {
             setShowWordModal(false);
             setSelectedWord(null);
+            setWordInfoLoading(false);
           }}
+          isLoading={wordInfoLoading}
         />
       )}
     </div>
