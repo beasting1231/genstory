@@ -1,9 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SelectStory } from "@db/schema";
 import { format } from "date-fns";
+import { GeneratedStory } from "@/components/GeneratedStory";
+import { useState } from "react";
 
 export default function SavedStories() {
+  const [selectedStory, setSelectedStory] = useState<SelectStory | null>(null);
   const { data: stories, isLoading, error } = useQuery<SelectStory[]>({
     queryKey: ["/api/stories"],
   });
@@ -36,7 +40,11 @@ export default function SavedStories() {
         <h1 className="text-2xl md:text-3xl font-bold mb-6">Saved Stories</h1>
         <div className="space-y-6">
           {stories?.map((story) => (
-            <Card key={story.id} className="shadow-md">
+            <Card 
+              key={story.id} 
+              className="shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setSelectedStory(story)}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xl font-bold">{story.title}</CardTitle>
@@ -49,18 +57,36 @@ export default function SavedStories() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="prose prose-sm max-w-none">
-                  {story.content.split("\n").map((paragraph, index) => (
-                    <p key={index} className="mb-4">
-                      {paragraph}
-                    </p>
-                  ))}
+                <div className="prose prose-sm max-w-none relative">
+                  <div className="max-h-32 overflow-hidden relative">
+                    {story.content.split("\n").map((paragraph, index) => (
+                      <p key={index} className="mb-4">
+                        {paragraph}
+                      </p>
+                    ))}
+                    <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       </div>
+
+      <Dialog open={!!selectedStory} onOpenChange={(open) => !open && setSelectedStory(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedStory && (
+            <GeneratedStory 
+              story={{
+                title: selectedStory.title,
+                content: selectedStory.content
+              }}
+              readingLevel={selectedStory.readingLevel}
+              wordCount={selectedStory.wordCount}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
