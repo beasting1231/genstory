@@ -93,10 +93,17 @@ export default function StudyDeck({ params }: StudyDeckProps) {
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               onDragEnd={onDragEnd}
-              initial={{ opacity: 0, x: direction === "left" ? -300 : 300 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction === "left" ? 300 : -300 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ 
+                opacity: 0,
+                x: direction === "left" ? -300 : 300,
+                transition: { duration: 0.2 }
+              }}
+              style={{
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                zIndex: vocabulary.length - currentIndex
+              }}
             >
               <div
                 className="w-full h-full"
