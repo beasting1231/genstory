@@ -4,6 +4,12 @@ if (!process.env.OPENROUTER_API_KEY) {
   throw new Error("OPENROUTER_API_KEY is required");
 }
 
+function stripMarkdownCodeBlock(content: string): string {
+  // Remove markdown code block syntax if present
+  const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  return jsonMatch ? jsonMatch[1] : content;
+}
+
 export async function generateStory(data: StoryFormData): Promise<StoryResponse> {
   const prompt = `
     As a creative writing assistant, create a story with these parameters:
@@ -85,8 +91,12 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
       const content = result.choices[0].message.content;
       console.log("Raw content from API:", content);
 
-      // Handle both string and object responses
-      parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+      // Strip markdown code block if present and then parse JSON
+      const cleanContent = stripMarkdownCodeBlock(content);
+      console.log("Cleaned content:", cleanContent);
+
+      // Parse the cleaned content
+      parsedContent = JSON.parse(cleanContent);
 
       if (!parsedContent.title || !parsedContent.content) {
         console.error("Missing required fields in response:", parsedContent);
