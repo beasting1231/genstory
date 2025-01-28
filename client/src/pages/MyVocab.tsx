@@ -62,13 +62,15 @@ export default function MyVocab() {
           </Card>
         ) : (
           <Tabs defaultValue={decks?.[0]?.id?.toString()}>
-            <TabsList className="w-full justify-start mb-4">
-              {decks?.map((deck) => (
-                <TabsTrigger key={deck.id} value={deck.id.toString()}>
-                  {deck.name} ({deck.vocabulary?.length || 0})
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="overflow-x-auto">
+              <TabsList className="w-max min-w-full inline-flex justify-start mb-4 px-4">
+                {decks?.map((deck) => (
+                  <TabsTrigger key={deck.id} value={deck.id.toString()}>
+                    {deck.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
 
             {decks?.map((deck) => (
               <TabsContent key={deck.id} value={deck.id.toString()}>
