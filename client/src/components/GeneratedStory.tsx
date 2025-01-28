@@ -39,7 +39,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     }));
   });
 
-  // Translation queries setup
   const translationQueries = useQueries({
     queries: [
       {
@@ -75,6 +74,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
 
   const getWordInfo = useMutation({
     mutationFn: async ({ word, context }: { word: string; context: string }) => {
+      console.log('Getting word info for:', word); // Debug log
       const response = await fetch("/api/word-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,6 +103,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     // Clean the word by removing any punctuation
     const cleanWord = word.replace(/[^a-zA-Z']/g, '').toLowerCase();
     if (cleanWord) {
+      console.log('Clicked word:', cleanWord); // Debug log
       getWordInfo.mutate({ word: cleanWord, context });
     }
   };
@@ -160,6 +161,22 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     },
   });
 
+  const renderWord = (word: string, context: string) => {
+    if (!word.trim()) return " ";
+    if (/^[,.!?;:()]+$/.test(word)) return word;
+
+    return (
+      <span
+        onClick={() => handleWordClick(word, context)}
+        className="cursor-pointer inline-block px-0.5 hover:bg-primary/10 hover:text-primary rounded"
+        role="button"
+        tabIndex={0}
+      >
+        {word}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -194,31 +211,14 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
         {sentences.map((sentence, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-lg leading-relaxed flex-grow">
-                {sentence.original.split(/(\s+|[,.!?;:()]|\b)/).map((part, i) => {
-                  // If the part is just whitespace or punctuation, render it directly
-                  if (!part.trim() || /^[,.!?;:()]+$/.test(part)) {
-                    return part;
-                  }
-                  // If it's a word, make it clickable
-                  if (/^[A-Za-z']+$/.test(part)) {
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleWordClick(part, sentence.original);
-                        }}
-                        className="hover:text-primary hover:underline focus:outline-none focus:text-primary focus:underline cursor-pointer px-0.5 inline-block"
-                      >
-                        {part}
-                      </button>
-                    );
-                  }
-                  return part;
-                })}
-              </p>
+              <div className="text-lg leading-relaxed flex-grow">
+                {sentence.original.split(/\s+/).map((word, wordIndex) => (
+                  <span key={wordIndex}>
+                    {renderWord(word, sentence.original)}
+                    {wordIndex !== sentence.original.split(/\s+/).length - 1 && " "}
+                  </span>
+                ))}
+              </div>
               <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
                 <Collapsible.Trigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
