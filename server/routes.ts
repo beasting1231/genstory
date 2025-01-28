@@ -2,16 +2,44 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { generateStory, generateFormData, translateSentence } from "./lib/openai";
 import { db } from "@db";
-import { stories, vocabulary } from "@db/schema";
+import { stories, vocabulary, decks } from "@db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
+  // Deck routes
+  app.post("/api/decks", async (req, res) => {
+    try {
+      const deck = await db.insert(decks)
+        .values(req.body)
+        .returning();
+      res.json(deck[0]);
+    } catch (error) {
+      console.error("Error creating deck:", error);
+      res.status(500).json({ message: "Failed to create deck" });
+    }
+  });
+
+  app.get("/api/decks", async (_req, res) => {
+    try {
+      const deckList = await db.query.decks.findMany({
+        orderBy: [desc(decks.createdAt)],
+        with: {
+          vocabulary: true,
+        },
+      });
+      res.json(deckList);
+    } catch (error) {
+      console.error("Error fetching decks:", error);
+      res.status(500).json({ message: "Failed to fetch decks" });
+    }
+  });
+
+  // Word info route
   app.post("/api/word-info", async (req, res) => {
     try {
       const { word, context } = req.body;
       console.log("Processing word info request for:", word);
 
-      // For Korean words, use OpenAI for both translation and part of speech
       const prompt = `Analyze this Korean word: "${word}"
       Respond with a JSON object in this format:
       {
@@ -62,7 +90,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Keep existing routes unchanged
+  // Other existing routes remain unchanged
   app.post("/api/generate", async (req, res) => {
     try {
       const storyData = req.body;
@@ -139,6 +167,9 @@ export function registerRoutes(app: Express): Server {
     try {
       const vocabItems = await db.query.vocabulary.findMany({
         orderBy: [desc(vocabulary.createdAt)],
+        with: {
+          deck: true,
+        },
       });
       res.json(vocabItems);
     } catch (error) {

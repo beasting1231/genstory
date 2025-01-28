@@ -1,5 +1,13 @@
-import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
+
+export const decks = pgTable("decks", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const stories = pgTable("stories", {
   id: serial("id").primaryKey(),
@@ -16,9 +24,20 @@ export const vocabulary = pgTable("vocabulary", {
   translation: text("translation").notNull(),
   partOfSpeech: text("part_of_speech").notNull(),
   context: text("context"),
-  userId: integer("user_id"), // For future auth integration
+  deckId: integer("deck_id").references(() => decks.id, { onDelete: 'cascade' }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const decksRelations = relations(decks, ({ many }) => ({
+  vocabulary: many(vocabulary),
+}));
+
+export const vocabularyRelations = relations(vocabulary, ({ one }) => ({
+  deck: one(decks, {
+    fields: [vocabulary.deckId],
+    references: [decks.id],
+  }),
+}));
 
 export const insertStorySchema = createInsertSchema(stories);
 export const selectStorySchema = createSelectSchema(stories);
@@ -29,3 +48,8 @@ export const insertVocabSchema = createInsertSchema(vocabulary);
 export const selectVocabSchema = createSelectSchema(vocabulary);
 export type InsertVocab = typeof vocabulary.$inferInsert;
 export type SelectVocab = typeof vocabulary.$inferSelect;
+
+export const insertDeckSchema = createInsertSchema(decks);
+export const selectDeckSchema = createSelectSchema(decks);
+export type InsertDeck = typeof decks.$inferInsert;
+export type SelectDeck = typeof decks.$inferSelect;
