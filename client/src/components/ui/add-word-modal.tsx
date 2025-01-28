@@ -131,8 +131,8 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
               placeholder="Enter word"
             />
             <Button
-              variant="outline"
-              className="w-full"
+              variant="secondary"
+              className="w-full hover:bg-secondary/80 focus-visible:ring-1 focus-visible:ring-ring"
               onClick={() => autofillWord.mutate()}
               disabled={!word || autofillWord.isPending}
             >
