@@ -157,7 +157,7 @@ export default function MyVocab() {
                 <TabsContent key={deck.id} value={deck.id.toString()}>
                   <div className="grid gap-4 md:grid-cols-3">
                     {deck.vocabulary?.map((item, index) => (
-                      <div key={item.id} className="relative overflow-hidden">
+                      <div key={item.id} className="relative overflow-hidden rounded-lg">
                         <div
                           className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4"
                         >
