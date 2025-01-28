@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueries } from "@tanstack/react-query";
 import { StoryResponse } from "@/lib/types";
@@ -144,11 +143,11 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   });
 
   return (
-    <Card className="bg-white">
-      <CardHeader>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-6">
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-2xl font-bold flex-grow">{story.title}</CardTitle>
+          <div className="flex items-center justify-between gap-2 border-b pb-4">
+            <h1 className="text-3xl font-bold flex-grow">{story.title}</h1>
             <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
               <Collapsible.Trigger asChild>
                 <Button 
@@ -177,9 +176,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
             </Collapsible.Content>
           </Collapsible.Root>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+
+        <div className="space-y-6">
           {sentences.map((sentence, index) => (
             <div key={index}>
               <div className="flex items-center justify-between gap-2">
@@ -214,15 +212,16 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
             </div>
           ))}
         </div>
+
         <Button 
           onClick={() => saveStory.mutate()} 
-          className="w-full mt-6"
+          className="w-full"
           disabled={saveStory.isPending}
         >
           <Save className="h-4 w-4 mr-2" />
           Save Story
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
