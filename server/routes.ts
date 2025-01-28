@@ -190,6 +190,20 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/vocabulary/:id", async (req, res) => {
+    try {
+      const vocabId = parseInt(req.params.id);
+      const vocabItem = await db.update(vocabulary)
+        .set(req.body)
+        .where(eq(vocabulary.id, vocabId))
+        .returning();
+      res.json(vocabItem[0]);
+    } catch (error) {
+      console.error("Error updating vocabulary:", error);
+      res.status(500).json({ message: "Failed to update vocabulary item" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

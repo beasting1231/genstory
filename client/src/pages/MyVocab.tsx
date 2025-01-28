@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { SelectDeck } from "@db/schema";
+import { SelectDeck, SelectVocab } from "@db/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Edit } from "lucide-react";
 import { useState, useRef, TouchEvent } from "react";
 import { CreateDeckModal } from "@/components/ui/create-deck-modal";
 import { AddWordModal } from "@/components/ui/add-word-modal";
@@ -36,6 +36,7 @@ export default function MyVocab() {
   const touchStartX = useRef<number | null>(null);
   const [swipedCards, setSwipedCards] = useState<{ [key: number]: number }>({});
   const queryClient = useQueryClient();
+  const [selectedWord, setSelectedWord] = useState<SelectVocab | null>(null);
 
   const { data: decks, isLoading: decksLoading, error: decksError } = useQuery<SelectDeck[]>({
     queryKey: ["/api/decks"],
@@ -184,12 +185,28 @@ export default function MyVocab() {
                           onTouchEnd={(e) => handleTouchEnd(e, deck.id, item.id)}
                         >
                           <CardContent className="pt-6 px-4">
-                            <p className="text-xl font-bold text-left">
-                              {index + 1}. {item.word}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {item.translation}
-                            </p>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-xl font-bold text-left">
+                                  {index + 1}. {item.word}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {item.translation}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  setSelectedWord(item);
+                                  setShowAddWord(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit word</span>
+                              </Button>
+                            </div>
                           </CardContent>
                         </Card>
                       </div>
@@ -208,8 +225,12 @@ export default function MyVocab() {
 
         <AddWordModal
           open={showAddWord}
-          onOpenChange={setShowAddWord}
+          onOpenChange={(open) => {
+            setShowAddWord(open);
+            if (!open) setSelectedWord(null);
+          }}
           decks={decks || []}
+          wordToEdit={selectedWord}
         />
 
         <AlertDialog

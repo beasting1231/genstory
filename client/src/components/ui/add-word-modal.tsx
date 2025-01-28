@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,76 +6,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { SelectDeck } from "@db/schema";
+import { SelectDeck, SelectVocab } from "@db/schema";
 import { Wand2 } from "lucide-react";
 
 interface AddWordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   decks: SelectDeck[];
+  wordToEdit?: SelectVocab | null;
 }
 
-export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
-  const [word, setWord] = useState("");
-  const [translation, setTranslation] = useState("");
-  const [partOfSpeech, setPartOfSpeech] = useState("");
-  const [context, setContext] = useState("");
-  const [selectedDeckId, setSelectedDeckId] = useState<string>("");
+export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordModalProps) {
+  const [word, setWord] = useState(wordToEdit?.word || "");
+  const [translation, setTranslation] = useState(wordToEdit?.translation || "");
+  const [partOfSpeech, setPartOfSpeech] = useState(wordToEdit?.partOfSpeech || "");
+  const [context, setContext] = useState(wordToEdit?.context || "");
+  const [selectedDeckId, setSelectedDeckId] = useState<string>(
+    wordToEdit?.deckId.toString() || ""
+  );
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const autofillWord = useMutation({
+  // Effect to update form when wordToEdit changes
+  useEffect(() => {
+    if (wordToEdit) {
+      setWord(wordToEdit.word);
+      setTranslation(wordToEdit.translation);
+      setPartOfSpeech(wordToEdit.partOfSpeech || "");
+      setContext(wordToEdit.context || "");
+      setSelectedDeckId(wordToEdit.deckId.toString());
+    }
+  }, [wordToEdit]);
+
+  const addOrUpdateWord = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/word-info", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word }),
-      });
+      const method = wordToEdit ? "PUT" : "POST";
+      const url = wordToEdit 
+        ? `/api/vocabulary/${wordToEdit.id}` 
+        : "/api/vocabulary";
 
-      if (!response.ok) {
-        throw new Error("Failed to get word information");
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setTranslation(data.translation);
-      if (data.partOfSpeech) {
-        setPartOfSpeech(data.partOfSpeech.toLowerCase());
-      }
-      if (data.context) {
-        setContext(data.context);
-      }
-      toast({
-        title: "Success",
-        description: "Word information filled automatically",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to get word information. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const addWord = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/vocabulary", {
-        method: "POST",
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           word,
           translation,
-          ...(partOfSpeech && { partOfSpeech }), // Only include if not empty
+          ...(partOfSpeech && { partOfSpeech }),
           context,
           deckId: parseInt(selectedDeckId),
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add word");
+        throw new Error(wordToEdit ? "Failed to update word" : "Failed to add word");
       }
 
       return response.json();
@@ -84,7 +67,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/decks"] });
       toast({
         title: "Success",
-        description: "Word added successfully",
+        description: wordToEdit ? "Word updated successfully" : "Word added successfully",
       });
       onOpenChange(false);
       // Reset form
@@ -97,7 +80,9 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to add word. Please try again.",
+        description: wordToEdit 
+          ? "Failed to update word. Please try again." 
+          : "Failed to add word. Please try again.",
         variant: "destructive",
       });
     },
@@ -107,7 +92,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Word</DialogTitle>
+          <DialogTitle>{wordToEdit ? "Edit Word" : "Add New Word"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
@@ -181,10 +166,12 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
           </div>
           <Button
             className="w-full"
-            onClick={() => addWord.mutate()}
-            disabled={!word || !translation || !selectedDeckId || addWord.isPending}
+            onClick={() => addOrUpdateWord.mutate()}
+            disabled={!word || !translation || !selectedDeckId || addOrUpdateWord.isPending}
           >
-            Add Word
+            {addOrUpdateWord.isPending 
+              ? "Saving..." 
+              : wordToEdit ? "Update Word" : "Add Word"}
           </Button>
         </div>
       </DialogContent>
