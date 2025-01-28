@@ -41,10 +41,11 @@ export function StoryForm() {
 
   const generateStory = useMutation({
     mutationFn: async (data: StoryFormData) => {
+      const language = localStorage.getItem("storyLanguage") || "English";
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, language }),
       });
 
       if (!response.ok) {

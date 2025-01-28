@@ -5,6 +5,7 @@ export interface StoryFormData {
   readingLevel: string;
   wordCount: number;
   additionalContext: string;
+  language?: string;
 }
 
 export interface StoryResponse {

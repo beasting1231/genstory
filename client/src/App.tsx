@@ -5,8 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import SavedStories from "@/pages/SavedStories";
+import Settings from "@/pages/Settings";
 import { Button } from "@/components/ui/button";
-import { Book, Plus } from "lucide-react";
+import { Book, Plus, Settings as SettingsIcon } from "lucide-react";
 
 function Navigation() {
   return (
@@ -18,12 +19,20 @@ function Navigation() {
             Create Story
           </Button>
         </Link>
-        <Link href="/saved">
-          <Button variant="ghost" className="text-lg font-semibold">
-            <Book className="h-5 w-5 mr-2" />
-            Saved Stories
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/saved">
+            <Button variant="ghost" className="text-lg font-semibold">
+              <Book className="h-5 w-5 mr-2" />
+              Saved Stories
+            </Button>
+          </Link>
+          <Link href="/settings">
+            <Button variant="ghost" className="text-lg font-semibold">
+              <SettingsIcon className="h-5 w-5 mr-2" />
+              Settings
+            </Button>
+          </Link>
+        </div>
       </div>
     </nav>
   );
@@ -36,6 +45,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/saved" component={SavedStories} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </div>

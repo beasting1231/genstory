@@ -10,7 +10,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function generateStory(data: StoryFormData): Promise<StoryResponse> {
   const prompt = `
-    As a creative writing assistant, create a story with these parameters:
+    As a creative writing assistant, create a story in ${data.language || "English"} with these parameters:
     - Setting: ${data.setting}
     - Main character: ${data.characterName}
     - Additional characters: ${data.additionalCharacters || "None"}
@@ -58,16 +58,10 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
       throw new Error("Missing required fields in story response");
     }
 
-    console.log("Successfully generated story:", {
-      title: result.title,
-      contentLength: result.content.length
-    });
-
     return result;
   } catch (error: any) {
     console.error("Error generating story:", error);
 
-    // Check for specific OpenAI error types
     if (error?.error?.type === 'insufficient_quota') {
       throw new Error("OpenAI API quota exceeded. Please check your API key.");
     }
