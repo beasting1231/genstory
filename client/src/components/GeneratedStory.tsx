@@ -42,7 +42,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sentence: sentence.original,
-            targetLanguage: localStorage.getItem('targetLanguage') || 'Spanish'
+            targetLanguage: 'English'
           }),
         });
         if (!response.ok) throw new Error('Translation failed');
@@ -143,17 +143,19 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                       )}
                     </Button>
                   </Collapsible.Trigger>
-                  <Collapsible.Content className="pt-2 pl-4 border-l-2 border-primary/20">
-                    {translationQueries[index].isPending ? (
-                      <p className="text-sm text-muted-foreground">Loading translation...</p>
-                    ) : translationQueries[index].error ? (
-                      <p className="text-sm text-destructive">Failed to load translation</p>
-                    ) : (
-                      <p className="text-sm italic">{translationQueries[index].data}</p>
-                    )}
-                  </Collapsible.Content>
                 </Collapsible.Root>
               </div>
+              <Collapsible.Root open={sentence.isOpen}>
+                <Collapsible.Content className="pt-2 pl-4 border-l-2 border-primary/20">
+                  {translationQueries[index].isPending ? (
+                    <p className="text-sm text-muted-foreground">Loading translation...</p>
+                  ) : translationQueries[index].error ? (
+                    <p className="text-sm text-destructive">Failed to load translation</p>
+                  ) : (
+                    <p className="text-sm italic">{translationQueries[index].data}</p>
+                  )}
+                </Collapsible.Content>
+              </Collapsible.Root>
             </div>
           ))}
         </div>
