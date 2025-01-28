@@ -191,59 +191,71 @@ export default function MyVocab() {
                     <Button
                       onClick={() => setLocation(`/study/${deck.id}`)}
                       className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500"
+                      disabled={!deck.vocabulary?.length}
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
-                      Study Deck
+                      Study this Deck
                     </Button>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {deck.vocabulary?.map((item, index) => (
-                      <div key={item.id} className="relative overflow-hidden rounded-lg">
-                        <div
-                          className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4"
-                        >
-                          <Trash2 className="h-5 w-5 text-white" />
-                        </div>
-                        <Card
-                          className={cn(
-                            "shadow-md transition-transform duration-200 touch-pan-y relative bg-background",
-                            "transform transition-transform duration-200 ease-out"
-                          )}
-                          style={{
-                            transform: `translateX(-${swipedCards[item.id] || 0}px)`,
-                          }}
-                          onTouchStart={(e) => handleTouchStart(e, item.id)}
-                          onTouchMove={(e) => handleTouchMove(e, item.id)}
-                          onTouchEnd={(e) => handleTouchEnd(e, deck.id, item.id)}
-                        >
-                          <CardContent className="pt-6 px-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xl font-bold text-left">
-                                  {index + 1}. {item.word}
-                                </p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {item.translation}
-                                </p>
+                  {!deck.vocabulary?.length ? (
+                    <Card className="p-8 text-center">
+                      <CardContent className="pt-6">
+                        <p className="text-4xl mb-4">📚</p>
+                        <p className="text-lg text-muted-foreground">
+                          No vocabulary added to this deck yet
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-3">
+                      {deck.vocabulary?.map((item, index) => (
+                        <div key={item.id} className="relative overflow-hidden rounded-lg">
+                          <div
+                            className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4"
+                          >
+                            <Trash2 className="h-5 w-5 text-white" />
+                          </div>
+                          <Card
+                            className={cn(
+                              "shadow-md transition-transform duration-200 touch-pan-y relative bg-background",
+                              "transform transition-transform duration-200 ease-out"
+                            )}
+                            style={{
+                              transform: `translateX(-${swipedCards[item.id] || 0}px)`,
+                            }}
+                            onTouchStart={(e) => handleTouchStart(e, item.id)}
+                            onTouchMove={(e) => handleTouchMove(e, item.id)}
+                            onTouchEnd={(e) => handleTouchEnd(e, deck.id, item.id)}
+                          >
+                            <CardContent className="pt-6 px-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-xl font-bold text-left">
+                                    {index + 1}. {item.word}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {item.translation}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setSelectedWord(item);
+                                    setShowAddWord(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  <span className="sr-only">Edit word</span>
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => {
-                                  setSelectedWord(item);
-                                  setShowAddWord(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit word</span>
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    ))}
-                  </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {/* Delete Deck Button */}
                   <div className="mt-8 pt-4 border-t">
                     <Button
