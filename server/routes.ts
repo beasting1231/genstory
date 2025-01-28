@@ -44,7 +44,8 @@ export function registerRoutes(app: Express): Server {
       Respond with a JSON object in this format:
       {
         "translation": "English translation",
-        "partOfSpeech": "part of speech (noun, verb, adjective, etc.)"
+        "partOfSpeech": "part of speech (noun, verb, adjective, etc.)",
+        "context": "A simple, beginner-friendly sentence using this word."
       }`;
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -58,7 +59,7 @@ export function registerRoutes(app: Express): Server {
           messages: [
             {
               role: "system",
-              content: "You are a Korean language expert. Provide accurate translations and grammatical analysis of Korean words.",
+              content: "You are a Korean language expert. Provide accurate translations, grammatical analysis, and simple example sentences for Korean words. Keep example sentences short and suitable for beginners.",
             },
             {
               role: "user",
@@ -82,7 +83,7 @@ export function registerRoutes(app: Express): Server {
         word,
         translation: result.translation,
         partOfSpeech: result.partOfSpeech,
-        context,
+        context: result.context || context, // Use AI-generated context or fallback to provided context
       });
     } catch (error) {
       console.error("Error analyzing word:", error);

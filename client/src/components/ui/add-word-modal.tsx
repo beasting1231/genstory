@@ -177,7 +177,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
           <Button
             className="w-full"
             onClick={() => addWord.mutate()}
-            disabled={!word || !translation || !partOfSpeech || !selectedDeckId || addWord.isPending}
+            disabled={!word || !translation || !selectedDeckId || addWord.isPending}
           >
             Add Word
           </Button>
