@@ -5,7 +5,7 @@ import { StoryResponse } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Save, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import * as Collapsible from "@radix-ui/react-collapsible";
 
 interface GeneratedStoryProps {
   story: StoryResponse;
@@ -128,12 +128,11 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           {sentences.map((sentence, index) => (
             <div key={index} className="space-y-2">
               <p className="text-lg leading-relaxed">{sentence.original}</p>
-              <Collapsible open={sentence.isOpen}>
-                <CollapsibleTrigger asChild>
+              <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
+                <Collapsible.Trigger asChild>
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => toggleTranslation(index)}
                     className="text-sm text-muted-foreground hover:text-foreground"
                   >
                     {sentence.isOpen ? (
@@ -143,8 +142,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                     )}
                     {sentence.isOpen ? "Hide" : "Show"} Translation
                   </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-2 pl-4 border-l-2 border-primary/20">
+                </Collapsible.Trigger>
+                <Collapsible.Content className="pt-2 pl-4 border-l-2 border-primary/20">
                   {translationQueries[index].isPending ? (
                     <p className="text-sm text-muted-foreground">Loading translation...</p>
                   ) : translationQueries[index].error ? (
@@ -152,8 +151,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                   ) : (
                     <p className="text-sm italic">{translationQueries[index].data}</p>
                   )}
-                </CollapsibleContent>
-              </Collapsible>
+                </Collapsible.Content>
+              </Collapsible.Root>
             </div>
           ))}
         </div>
