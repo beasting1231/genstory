@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { generateStory, generateFormData, translateSentence } from "./lib/openai";
 import { db } from "@db";
-import { stories } from "@db/schema";
+import { stories, vocabulary } from "@db/schema";
+import { desc, eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   app.post("/api/generate", async (req, res) => {
@@ -37,6 +38,36 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.post("/api/word-info", async (req, res) => {
+    try {
+      const { word, context } = req.body;
+      const response = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch word information");
+      }
+
+      const data = await response.json();
+      const meanings = data[0]?.meanings || [];
+      const partOfSpeech = meanings[0]?.partOfSpeech || "unknown";
+
+      // Get translation
+      const translation = await translateSentence(word);
+
+      res.json({
+        word,
+        translation,
+        partOfSpeech,
+        context,
+      });
+    } catch (error) {
+      console.error("Error fetching word info:", error);
+      res.status(500).json({ message: "Failed to get word information" });
+    }
+  });
+
   app.post("/api/stories", async (req, res) => {
     try {
       const { title, content, readingLevel, wordCount } = req.body;
@@ -56,12 +87,36 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/stories", async (_req, res) => {
     try {
       const savedStories = await db.query.stories.findMany({
-        orderBy: (stories, { desc }) => [desc(stories.createdAt)],
+        orderBy: [desc(stories.createdAt)],
       });
       res.json(savedStories);
     } catch (error) {
       console.error("Error fetching stories:", error);
       res.status(500).json({ message: "Failed to fetch stories" });
+    }
+  });
+
+  app.post("/api/vocabulary", async (req, res) => {
+    try {
+      const vocabItem = await db.insert(vocabulary)
+        .values(req.body)
+        .returning();
+      res.json(vocabItem[0]);
+    } catch (error) {
+      console.error("Error saving vocabulary:", error);
+      res.status(500).json({ message: "Failed to save vocabulary item" });
+    }
+  });
+
+  app.get("/api/vocabulary", async (_req, res) => {
+    try {
+      const vocabItems = await db.query.vocabulary.findMany({
+        orderBy: [desc(vocabulary.createdAt)],
+      });
+      res.json(vocabItems);
+    } catch (error) {
+      console.error("Error fetching vocabulary:", error);
+      res.status(500).json({ message: "Failed to fetch vocabulary" });
     }
   });
 

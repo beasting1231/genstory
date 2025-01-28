@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Save, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { WordModal } from "@/components/ui/word-modal";
 
 interface GeneratedStoryProps {
   story: StoryResponse;
@@ -18,9 +19,17 @@ interface SentenceTranslation {
   translation?: string;
 }
 
+interface WordInfo {
+  word: string;
+  translation: string;
+  partOfSpeech: string;
+  context: string;
+}
+
 export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStoryProps) {
   const { toast } = useToast();
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
+  const [selectedWord, setSelectedWord] = useState<WordInfo | null>(null);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
     // Custom split that keeps quoted text together including opening quotes and dialogue attribution
     const matches = story.content.match(/(?:[^.!?"]+|"[^"]*"[^.!?]*)+[.!?]+/g) || [];
@@ -73,6 +82,32 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     ],
   });
 
+  const getWordInfo = useMutation({
+    mutationFn: async ({ word, context }: { word: string; context: string }) => {
+      const response = await fetch("/api/word-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word, context }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get word information");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSelectedWord(data);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to get word information",
+        variant: "destructive",
+      });
+    },
+  });
+
   const toggleTitleTranslation = async () => {
     setTitleTranslationOpen(!titleTranslationOpen);
     if (!titleTranslationOpen && !translationQueries[0].data) {
@@ -106,6 +141,10 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     }
 
     setSentences(newSentences);
+  };
+
+  const handleWordClick = (word: string, context: string) => {
+    getWordInfo.mutate({ word, context });
   };
 
   const saveStory = useMutation({
@@ -181,7 +220,23 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           {sentences.map((sentence, index) => (
             <div key={index}>
               <div className="flex items-center justify-between gap-2">
-                <p className="text-lg leading-relaxed flex-grow">{sentence.original}</p>
+                <p className="text-lg leading-relaxed flex-grow">
+                  {sentence.original.split(/\b/).map((part, i) => {
+                    // Skip spaces and punctuation
+                    if (!/^[A-Za-z']+$/.test(part)) {
+                      return part;
+                    }
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleWordClick(part, sentence.original)}
+                        className="hover:text-primary hover:underline focus:outline-none focus:text-primary focus:underline"
+                      >
+                        {part}
+                      </button>
+                    );
+                  })}
+                </p>
                 <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
                   <Collapsible.Trigger asChild>
                     <Button 
@@ -222,6 +277,17 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           Save Story
         </Button>
       </div>
+
+      {selectedWord && (
+        <WordModal
+          word={selectedWord.word}
+          translation={selectedWord.translation}
+          partOfSpeech={selectedWord.partOfSpeech}
+          context={selectedWord.context}
+          isOpen={true}
+          onClose={() => setSelectedWord(null)}
+        />
+      )}
     </div>
   );
 }
