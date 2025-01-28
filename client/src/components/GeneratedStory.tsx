@@ -129,7 +129,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   });
 
   const handleWordClick = (word: string, context: string) => {
-    // Remove punctuation but keep Korean characters
     const cleanWord = word.replace(/[^\p{L}']/gu, '').trim();
     if (cleanWord) {
       console.log('Clicked word:', cleanWord); // Debug log
@@ -152,14 +151,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       return newSentences;
     });
 
-    // If we're opening the translation, trigger the query
     if (!sentences[index].isOpen) {
-      console.log('Triggering sentence translation for index:', index);
-      try {
-        await translationQueries[index + 1].refetch();
-      } catch (error) {
-        console.error('Translation error:', error);
-      }
+      await translationQueries[index + 1].refetch();
     }
   };
 
@@ -249,17 +242,21 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
 
       <div className="space-y-6">
         {sentences.map((sentence, index) => (
-          <div key={index} className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-lg leading-relaxed flex-grow">
-                {sentence.original.split(/\s+/).map((word, wordIndex) => (
-                  <span key={wordIndex}>
-                    {renderWord(word, sentence.original)}
-                    {wordIndex !== sentence.original.split(/\s+/).length - 1 && " "}
-                  </span>
-                ))}
-              </div>
-              <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
+          <Collapsible.Root 
+            key={index} 
+            open={sentence.isOpen} 
+            onOpenChange={() => toggleTranslation(index)}
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-lg leading-relaxed flex-grow">
+                  {sentence.original.split(/\s+/).map((word, wordIndex) => (
+                    <span key={wordIndex}>
+                      {renderWord(word, sentence.original)}
+                      {wordIndex !== sentence.original.split(/\s+/).length - 1 && " "}
+                    </span>
+                  ))}
+                </div>
                 <Collapsible.Trigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     {sentence.isOpen ? (
@@ -269,9 +266,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                     )}
                   </Button>
                 </Collapsible.Trigger>
-              </Collapsible.Root>
-            </div>
-            <Collapsible.Root open={sentence.isOpen}>
+              </div>
               <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
                 {translationQueries[index + 1].isPending ? (
                   <p className="text-sm text-muted-foreground">Loading translation...</p>
@@ -285,8 +280,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                   <p className="text-sm italic">{translationQueries[index + 1].data}</p>
                 )}
               </Collapsible.Content>
-            </Collapsible.Root>
-          </div>
+            </div>
+          </Collapsible.Root>
         ))}
       </div>
 
