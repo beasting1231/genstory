@@ -48,6 +48,10 @@ export function StoryForm() {
       });
 
       if (!response.ok) {
+        const text = await response.text();
+        if (text.includes("rate limit exceeded")) {
+          throw new Error("The AI service is temporarily unavailable due to high demand. Please try again in a few minutes.");
+        }
         throw new Error("Failed to generate story");
       }
 
@@ -56,10 +60,10 @@ export function StoryForm() {
     onSuccess: (data) => {
       setStory(data);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to generate story. Please try again.",
+        description: error.message || "Failed to generate story. Please try again.",
         variant: "destructive",
       });
     },

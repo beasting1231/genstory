@@ -75,11 +75,26 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
     if (!response.ok) {
       const errorData = await response.text();
       console.error("OpenRouter API error response:", errorData);
+
+      // Check for rate limit error
+      if (response.status === 429) {
+        throw new Error("API rate limit exceeded. Please try again in a few minutes.");
+      }
+
       throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
     }
 
     const result = await response.json();
     console.log("OpenRouter API raw response:", JSON.stringify(result, null, 2));
+
+    // Check for error in the API response
+    if (result.error) {
+      console.error("OpenRouter API returned error:", result.error);
+      if (result.error.code === 429) {
+        throw new Error("API rate limit exceeded. Please try again in a few minutes.");
+      }
+      throw new Error(result.error.message || "Unknown API error occurred");
+    }
 
     if (!result.choices?.[0]?.message?.content) {
       console.error("Invalid response structure:", result);
