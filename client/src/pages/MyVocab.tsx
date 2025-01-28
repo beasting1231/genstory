@@ -1,3 +1,4 @@
+import { Library } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { SelectDeck, SelectVocab } from "@db/schema";
@@ -153,17 +154,12 @@ export default function MyVocab() {
         </div>
 
         {decks?.length === 0 ? (
-          <Card className="text-center p-8">
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                You don't have any vocabulary decks yet.
-              </p>
-              <Button onClick={() => setShowCreateDeck(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Deck
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Library className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-lg font-semibold text-muted-foreground">
+              You don't have any vocabulary decks yet.
+            </p>
+          </div>
         ) : (
           <>
             <h2 className="text-lg font-medium mb-2">My Decks:</h2>
@@ -198,14 +194,12 @@ export default function MyVocab() {
                     </Button>
                   </div>
                   {!deck.vocabulary?.length ? (
-                    <Card className="p-8 text-center">
-                      <CardContent className="pt-6">
-                        <p className="text-4xl mb-4">📚</p>
-                        <p className="text-lg text-muted-foreground">
-                          No vocabulary added to this deck yet
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <Library className="h-12 w-12 text-muted-foreground mb-4" />
+                      <p className="text-lg font-semibold text-muted-foreground">
+                        No vocabulary added to this deck yet
+                      </p>
+                    </div>
                   ) : (
                     <div className="grid gap-4 md:grid-cols-3">
                       {deck.vocabulary?.map((item, index) => (
