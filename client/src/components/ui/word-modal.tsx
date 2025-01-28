@@ -1,15 +1,10 @@
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 import { CreateDeckModal } from "./create-deck-modal";
 import { SelectDeck } from "@db/schema";
 
@@ -86,15 +81,6 @@ export function WordModal({
             <DialogTitle className="text-2xl font-bold capitalize">{word}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <Button
-              type="button"
-              onClick={() => saveToVocab.mutate()}
-              disabled={!selectedDeckId || saveToVocab.isPending || isLoading}
-              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save to My Vocab
-            </Button>
             {isLoading ? (
               <div className="space-y-4">
                 <div className="h-4 bg-muted animate-pulse rounded w-3/4"></div>
@@ -117,38 +103,48 @@ export function WordModal({
                     <p className="mt-1 text-sm italic">"{context}"</p>
                   </div>
                 )}
+
+                <Button
+                  type="button"
+                  onClick={() => saveToVocab.mutate()}
+                  disabled={!selectedDeckId || saveToVocab.isPending || isLoading}
+                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save to My Vocab
+                </Button>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Select Deck</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCreateDeck(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      New Deck
+                    </Button>
+                  </div>
+                  <Select
+                    value={selectedDeckId}
+                    onValueChange={setSelectedDeckId}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a deck" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {decks?.map((deck) => (
+                        <SelectItem key={deck.id} value={deck.id.toString()}>
+                          {deck.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             )}
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Select Deck</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCreateDeck(true)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  New Deck
-                </Button>
-              </div>
-              <Select
-                value={selectedDeckId}
-                onValueChange={setSelectedDeckId}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a deck" />
-                </SelectTrigger>
-                <SelectContent>
-                  {decks?.map((deck) => (
-                    <SelectItem key={deck.id} value={deck.id.toString()}>
-                      {deck.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
