@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -138,22 +138,25 @@ export default function StudyDeck({ params }: StudyDeckProps) {
               key={currentIndex}
               className="absolute inset-0 cursor-grab active:cursor-grabbing"
               style={{
+                x: dragX,
                 background: cardBackground,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 zIndex: vocabulary.length - currentIndex,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center", //Added for centering
               }}
               drag="x"
               dragElastic={0.7}
               onDragEnd={onDragEnd}
               dragConstraints={{ left: 0, right: 0 }}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.8, x: 0, y:0 }}  //Added y:0 for centering
+              animate={{ opacity: 1, scale: 1, x: 0, y:0, transition: { duration: 0.3 }}} //Added transition
               exit={{ 
                 opacity: 0,
                 x: direction === "left" ? -300 : 300,
                 transition: { duration: 0.2 }
               }}
-              style={{ x: dragX }}
             >
               <div
                 className="w-full h-full"
