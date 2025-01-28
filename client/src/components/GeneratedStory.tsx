@@ -103,7 +103,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   });
 
   const handleWordClick = (word: string, context: string) => {
-    const cleanWord = word.replace(/[^a-zA-Z']/g, '').toLowerCase();
+    // Remove punctuation but keep Korean characters
+    const cleanWord = word.replace(/[^\p{L}']/gu, '').trim();
     if (cleanWord) {
       console.log('Clicked word:', cleanWord); // Debug log
       getWordInfo.mutate({ word: cleanWord, context });
@@ -248,8 +249,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
         ))}
       </div>
 
-      <Button 
-        onClick={() => saveStory.mutate()} 
+      <Button
+        onClick={() => saveStory.mutate()}
         className="w-full"
         disabled={saveStory.isPending}
       >

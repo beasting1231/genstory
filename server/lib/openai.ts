@@ -125,7 +125,7 @@ export async function translateSentence(sentence: string, targetLanguage: string
       messages: [
         {
           role: "system",
-          content: "You are a precise translator. Translate exactly what is provided, maintaining the tone and meaning.",
+          content: "You are a precise translator. Translate exactly what is provided, maintaining the tone and meaning. You are particularly skilled at translating between Korean and English.",
         },
         { 
           role: "user", 
@@ -142,6 +142,12 @@ export async function translateSentence(sentence: string, targetLanguage: string
     return response.choices[0].message.content.trim();
   } catch (error: any) {
     console.error("Error translating sentence:", error);
+    if (error?.error?.type === 'insufficient_quota') {
+      throw new Error("OpenAI API quota exceeded. Please check your API key.");
+    }
+    if (error?.error?.type === 'rate_limit_exceeded') {
+      throw new Error("API rate limit exceeded. Please try again in a few minutes.");
+    }
     throw error;
   }
 }

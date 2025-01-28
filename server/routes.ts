@@ -9,35 +9,55 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/word-info", async (req, res) => {
     try {
       const { word, context } = req.body;
-      console.log("Processing word info request for:", word); // Debug log
+      console.log("Processing word info request for:", word);
 
-      // Get dictionary info
-      const response = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`
-      );
+      // For Korean words, use OpenAI for both translation and part of speech
+      const prompt = `Analyze this Korean word: "${word}"
+      Respond with a JSON object in this format:
+      {
+        "translation": "English translation",
+        "partOfSpeech": "part of speech (noun, verb, adjective, etc.)"
+      }`;
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are a Korean language expert. Provide accurate translations and grammatical analysis of Korean words.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
 
       if (!response.ok) {
-        console.error("Dictionary API error:", await response.text());
-        throw new Error("Failed to fetch word information");
+        throw new Error("Failed to analyze word");
       }
 
       const data = await response.json();
-      const meanings = data[0]?.meanings || [];
-      const partOfSpeech = meanings[0]?.partOfSpeech || "unknown";
+      const result = JSON.parse(data.choices[0].message.content);
 
-      // Get translation
-      const translation = await translateSentence(word);
-
-      console.log("Sending word info response:", { word, translation, partOfSpeech, context }); // Debug log
+      console.log("Word analysis result:", result);
 
       res.json({
         word,
-        translation,
-        partOfSpeech,
+        translation: result.translation,
+        partOfSpeech: result.partOfSpeech,
         context,
       });
     } catch (error) {
-      console.error("Error fetching word info:", error);
+      console.error("Error analyzing word:", error);
       res.status(500).json({ message: "Failed to get word information" });
     }
   });
