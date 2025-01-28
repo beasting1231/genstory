@@ -29,7 +29,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
       const response = await fetch("/api/word-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word, context }),
+        body: JSON.stringify({ word }),
       });
 
       if (!response.ok) {
@@ -40,7 +40,12 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
     },
     onSuccess: (data) => {
       setTranslation(data.translation);
-      setPartOfSpeech(data.partOfSpeech.toLowerCase());
+      if (data.partOfSpeech) {
+        setPartOfSpeech(data.partOfSpeech.toLowerCase());
+      }
+      if (data.context) {
+        setContext(data.context);
+      }
       toast({
         title: "Success",
         description: "Word information filled automatically",
@@ -63,7 +68,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
         body: JSON.stringify({
           word,
           translation,
-          partOfSpeech,
+          ...(partOfSpeech && { partOfSpeech }), // Only include if not empty
           context,
           deckId: parseInt(selectedDeckId),
         }),
@@ -137,7 +142,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
               disabled={!word || autofillWord.isPending}
             >
               <Wand2 className="h-4 w-4 mr-2" />
-              Autofill with AI
+              {autofillWord.isPending ? "Filling..." : "Autofill with AI"}
             </Button>
           </div>
           <div className="space-y-2">
@@ -149,7 +154,7 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Part of Speech</label>
+            <label className="text-sm font-medium">Part of Speech (optional)</label>
             <Select
               value={partOfSpeech}
               onValueChange={setPartOfSpeech}
@@ -167,11 +172,11 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Context (optional)</label>
+            <label className="text-sm font-medium">Example Sentence</label>
             <Textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
-              placeholder="Enter example sentence or context"
+              placeholder="Example sentence using this word"
             />
           </div>
           <Button

@@ -22,7 +22,7 @@ export const vocabulary = pgTable("vocabulary", {
   id: serial("id").primaryKey(),
   word: text("word").notNull(),
   translation: text("translation").notNull(),
-  partOfSpeech: text("part_of_speech").notNull(),
+  partOfSpeech: text("part_of_speech"),  // Made optional by removing .notNull()
   context: text("context"),
   deckId: integer("deck_id").references(() => decks.id, { onDelete: 'cascade' }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

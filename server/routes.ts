@@ -37,16 +37,16 @@ export function registerRoutes(app: Express): Server {
   // Word info route
   app.post("/api/word-info", async (req, res) => {
     try {
-      const { word, context } = req.body;
+      const { word } = req.body;
       console.log("Processing word info request for:", word);
 
       const prompt = `Analyze this Korean word: "${word}"
-      Respond with a JSON object in this format:
-      {
-        "translation": "English translation",
-        "partOfSpeech": "part of speech (noun, verb, adjective, etc.)",
-        "context": "A simple, beginner-friendly sentence using this word."
-      }`;
+    Respond with a JSON object in this format:
+    {
+      "translation": "English translation",
+      "partOfSpeech": "part of speech (noun, verb, adjective, etc.)",
+      "context": "A simple, beginner-friendly Korean sentence using this word. Keep it very short (max 5 words)."
+    }`;
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -59,7 +59,7 @@ export function registerRoutes(app: Express): Server {
           messages: [
             {
               role: "system",
-              content: "You are a Korean language expert. Provide accurate translations, grammatical analysis, and simple example sentences for Korean words. Keep example sentences short and suitable for beginners.",
+              content: "You are a Korean language expert. Always provide a very simple and short example sentence (max 5 words) that a beginner can understand. Focus on common, everyday usage.",
             },
             {
               role: "user",
@@ -83,7 +83,7 @@ export function registerRoutes(app: Express): Server {
         word,
         translation: result.translation,
         partOfSpeech: result.partOfSpeech,
-        context: result.context || context, // Use AI-generated context or fallback to provided context
+        context: result.context,
       });
     } catch (error) {
       console.error("Error analyzing word:", error);
