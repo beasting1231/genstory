@@ -39,6 +39,9 @@ export default function StudyDeck({ params }: StudyDeckProps) {
         setIsFlipped(false);
         setDirection(null);
       }, 200);
+    } else {
+      // Animate back to center
+      setDirection(null);
     }
   };
 
@@ -131,7 +134,8 @@ export default function StudyDeck({ params }: StudyDeckProps) {
                 direction === "right" && "bg-green-500/10"
               )}
               drag="x"
-              dragElastic={1}
+              dragElastic={0.7}
+              dragSnapToOrigin={true}
               onDragEnd={onDragEnd}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
