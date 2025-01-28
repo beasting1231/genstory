@@ -40,24 +40,31 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     }));
   });
 
+  const storedLanguage = localStorage.getItem("storyLanguage") || "English";
+
   const translationQueries = useQueries({
     queries: [
       {
         queryKey: ['translation', story.title],
         queryFn: async () => {
+          console.log('Translating title:', story.title); // Debug log
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               sentence: story.title,
-              targetLanguage: "English" // Add target language
+              targetLanguage: storedLanguage
             }),
           });
+
           if (!response.ok) {
-            const error = await response.text();
-            throw new Error(error || 'Translation failed');
+            const errorText = await response.text();
+            console.error('Translation error:', errorText); // Debug log
+            throw new Error(errorText || 'Translation failed');
           }
+
           const data = await response.json();
+          console.log('Translation response:', data); // Debug log
           return data.translation;
         },
         enabled: false,
@@ -66,19 +73,24 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       ...sentences.map((sentence) => ({
         queryKey: ['translation', sentence.original],
         queryFn: async () => {
+          console.log('Translating sentence:', sentence.original); // Debug log
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               sentence: sentence.original,
-              targetLanguage: "English" // Add target language
+              targetLanguage: storedLanguage
             }),
           });
+
           if (!response.ok) {
-            const error = await response.text();
-            throw new Error(error || 'Translation failed');
+            const errorText = await response.text();
+            console.error('Translation error:', errorText); // Debug log
+            throw new Error(errorText || 'Translation failed');
           }
+
           const data = await response.json();
+          console.log('Translation response:', data); // Debug log
           return data.translation;
         },
         enabled: false,
@@ -127,8 +139,9 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
 
   const toggleTitleTranslation = async () => {
     setTitleTranslationOpen(!titleTranslationOpen);
-    if (!titleTranslationOpen && !translationQueries[0].data) {
-      translationQueries[0].refetch();
+    if (!titleTranslationOpen) {
+      console.log('Triggering title translation'); // Debug log
+      await translationQueries[0].refetch();
     }
   };
 
@@ -139,8 +152,14 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       return newSentences;
     });
 
-    if (!sentences[index].isOpen && !translationQueries[index + 1].data) {
-      translationQueries[index + 1].refetch();
+    // If we're opening the translation, trigger the query
+    if (!sentences[index].isOpen) {
+      console.log('Triggering sentence translation for index:', index);
+      try {
+        await translationQueries[index + 1].refetch();
+      } catch (error) {
+        console.error('Translation error:', error);
+      }
     }
   };
 
@@ -216,7 +235,11 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
             {translationQueries[0].isPending ? (
               <p className="text-sm text-muted-foreground">Loading translation...</p>
             ) : translationQueries[0].error ? (
-              <p className="text-sm text-destructive">Failed to load translation</p>
+              <p className="text-sm text-destructive">
+                {translationQueries[0].error instanceof Error 
+                  ? translationQueries[0].error.message 
+                  : 'Failed to load translation'}
+              </p>
             ) : (
               <p className="text-sm italic">{translationQueries[0].data}</p>
             )}
@@ -253,7 +276,11 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                 {translationQueries[index + 1].isPending ? (
                   <p className="text-sm text-muted-foreground">Loading translation...</p>
                 ) : translationQueries[index + 1].error ? (
-                  <p className="text-sm text-destructive">Failed to load translation</p>
+                  <p className="text-sm text-destructive">
+                    {translationQueries[index + 1].error instanceof Error 
+                      ? translationQueries[index + 1].error.message 
+                      : 'Failed to load translation'}
+                  </p>
                 ) : (
                   <p className="text-sm italic">{translationQueries[index + 1].data}</p>
                 )}
