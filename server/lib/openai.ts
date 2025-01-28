@@ -40,11 +40,11 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
         "X-Title": "AI Graded Reader Generator"
       },
       body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct",
+        model: "deepseek-ai/deepseek-coder-6.7b-instruct",
         messages: [
           {
             role: "system",
-            content: "You are a creative writing assistant that creates stories based on user parameters. Always return stories in JSON format with 'title' and 'content' fields."
+            content: "You are a creative writing assistant that creates engaging and level-appropriate stories based on user parameters. Always return stories in JSON format with 'title' and 'content' fields. Ensure the vocabulary and grammar complexity matches the requested reading level."
           },
           { 
             role: "user", 
