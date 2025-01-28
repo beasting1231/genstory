@@ -31,7 +31,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [selectedWord, setSelectedWord] = useState<WordInfo | null>(null);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
-    // Custom split that keeps quoted text together including opening quotes and dialogue attribution
     const matches = story.content.match(/(?:[^.!?"]+|"[^"]*"[^.!?]*)+[.!?]+/g) || [];
     return matches.map(sentence => ({
       original: sentence.trim(),
@@ -40,20 +39,16 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     }));
   });
 
-  // Create queries for sentence translations and title translation
+  // Translation queries setup
   const translationQueries = useQueries({
     queries: [
-      // Title translation query
       {
         queryKey: ['translation', story.title],
         queryFn: async () => {
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sentence: story.title,
-              targetLanguage: 'English'
-            }),
+            body: JSON.stringify({ sentence: story.title }),
           });
           if (!response.ok) throw new Error('Translation failed');
           const data = await response.json();
@@ -61,17 +56,13 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
         },
         enabled: false,
       },
-      // Sentence translations
       ...sentences.map((sentence) => ({
         queryKey: ['translation', sentence.original],
         queryFn: async () => {
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sentence: sentence.original,
-              targetLanguage: 'English'
-            }),
+            body: JSON.stringify({ sentence: sentence.original }),
           });
           if (!response.ok) throw new Error('Translation failed');
           const data = await response.json();
@@ -108,43 +99,31 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     },
   });
 
+  const handleWordClick = (word: string, context: string) => {
+    // Clean the word by removing any punctuation
+    const cleanWord = word.replace(/[^a-zA-Z']/g, '').toLowerCase();
+    if (cleanWord) {
+      getWordInfo.mutate({ word: cleanWord, context });
+    }
+  };
+
   const toggleTitleTranslation = async () => {
     setTitleTranslationOpen(!titleTranslationOpen);
     if (!titleTranslationOpen && !translationQueries[0].data) {
-      try {
-        translationQueries[0].refetch();
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load title translation",
-          variant: "destructive",
-        });
-      }
+      translationQueries[0].refetch();
     }
   };
 
   const toggleTranslation = async (index: number) => {
-    const newSentences = [...sentences];
-    newSentences[index].isOpen = !newSentences[index].isOpen;
+    setSentences(prev => {
+      const newSentences = [...prev];
+      newSentences[index].isOpen = !newSentences[index].isOpen;
+      return newSentences;
+    });
 
-    if (newSentences[index].isOpen && !sentences[index].translation) {
-      try {
-        // Add 1 to index because the first query is for the title
-        translationQueries[index + 1].refetch();
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load translation",
-          variant: "destructive",
-        });
-      }
+    if (!sentences[index].isOpen && !translationQueries[index + 1].data) {
+      translationQueries[index + 1].refetch();
     }
-
-    setSentences(newSentences);
-  };
-
-  const handleWordClick = (word: string, context: string) => {
-    getWordInfo.mutate({ word, context });
   };
 
   const saveStory = useMutation({
@@ -182,101 +161,90 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2 border-b pb-4">
-            <h1 className="text-3xl font-bold flex-grow">{story.title}</h1>
-            <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
-              <Collapsible.Trigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
-                  {titleTranslationOpen ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </Collapsible.Trigger>
-            </Collapsible.Root>
-          </div>
-          <Collapsible.Root open={titleTranslationOpen}>
-            <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
-              {translationQueries[0].isPending ? (
-                <p className="text-sm text-muted-foreground">Loading translation...</p>
-              ) : translationQueries[0].error ? (
-                <p className="text-sm text-destructive">Failed to load translation</p>
-              ) : (
-                <p className="text-sm italic">{translationQueries[0].data}</p>
-              )}
-            </Collapsible.Content>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2 border-b pb-4">
+          <h1 className="text-3xl font-bold flex-grow">{story.title}</h1>
+          <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
+            <Collapsible.Trigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                {titleTranslationOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </Collapsible.Trigger>
           </Collapsible.Root>
         </div>
+        <Collapsible.Root open={titleTranslationOpen}>
+          <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
+            {translationQueries[0].isPending ? (
+              <p className="text-sm text-muted-foreground">Loading translation...</p>
+            ) : translationQueries[0].error ? (
+              <p className="text-sm text-destructive">Failed to load translation</p>
+            ) : (
+              <p className="text-sm italic">{translationQueries[0].data}</p>
+            )}
+          </Collapsible.Content>
+        </Collapsible.Root>
+      </div>
 
-        <div className="space-y-6">
-          {sentences.map((sentence, index) => (
-            <div key={index}>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-lg leading-relaxed flex-grow">
-                  {sentence.original.split(/\b/).map((part, i) => {
-                    // Skip spaces and punctuation
-                    if (!/^[A-Za-z']+$/.test(part)) {
-                      return part;
-                    }
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => handleWordClick(part, sentence.original)}
-                        className="hover:text-primary hover:underline focus:outline-none focus:text-primary focus:underline"
-                      >
-                        {part}
-                      </button>
-                    );
-                  })}
-                </p>
-                <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
-                  <Collapsible.Trigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-8 w-8 p-0"
+      <div className="space-y-6">
+        {sentences.map((sentence, index) => (
+          <div key={index} className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-lg leading-relaxed flex-grow">
+                {sentence.original.split(/\b/).map((part, i) => {
+                  if (!/[a-zA-Z']+/.test(part)) {
+                    return part;
+                  }
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleWordClick(part, sentence.original)}
+                      className="hover:text-primary hover:underline focus:outline-none focus:text-primary focus:underline cursor-pointer px-0.5"
                     >
-                      {sentence.isOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </Collapsible.Trigger>
-                </Collapsible.Root>
-              </div>
-              <Collapsible.Root open={sentence.isOpen}>
-                <Collapsible.Content className="pt-2 pl-4 border-l-2 border-primary/20">
-                  {translationQueries[index + 1].isPending ? (
-                    <p className="text-sm text-muted-foreground">Loading translation...</p>
-                  ) : translationQueries[index + 1].error ? (
-                    <p className="text-sm text-destructive">Failed to load translation</p>
-                  ) : (
-                    <p className="text-sm italic">{translationQueries[index + 1].data}</p>
-                  )}
-                </Collapsible.Content>
+                      {part}
+                    </button>
+                  );
+                })}
+              </p>
+              <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
+                <Collapsible.Trigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    {sentence.isOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </Collapsible.Trigger>
               </Collapsible.Root>
             </div>
-          ))}
-        </div>
-
-        <Button 
-          onClick={() => saveStory.mutate()} 
-          className="w-full"
-          disabled={saveStory.isPending}
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Save Story
-        </Button>
+            <Collapsible.Root open={sentence.isOpen}>
+              <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
+                {translationQueries[index + 1].isPending ? (
+                  <p className="text-sm text-muted-foreground">Loading translation...</p>
+                ) : translationQueries[index + 1].error ? (
+                  <p className="text-sm text-destructive">Failed to load translation</p>
+                ) : (
+                  <p className="text-sm italic">{translationQueries[index + 1].data}</p>
+                )}
+              </Collapsible.Content>
+            </Collapsible.Root>
+          </div>
+        ))}
       </div>
+
+      <Button 
+        onClick={() => saveStory.mutate()} 
+        className="w-full"
+        disabled={saveStory.isPending}
+      >
+        <Save className="h-4 w-4 mr-2" />
+        Save Story
+      </Button>
 
       {selectedWord && (
         <WordModal
