@@ -11,6 +11,7 @@ interface GeneratedStoryProps {
   story: StoryResponse;
   readingLevel: string;
   wordCount: number;
+  hideActions?: boolean;
 }
 
 interface SentenceTranslation {
@@ -26,7 +27,7 @@ interface WordInfo {
   context: string;
 }
 
-export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStoryProps) {
+export function GeneratedStory({ story, readingLevel, wordCount, hideActions = false }: GeneratedStoryProps) {
   const { toast } = useToast();
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [selectedWord, setSelectedWord] = useState<WordInfo | null>(null);
@@ -339,14 +340,16 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
         ))}
       </div>
 
-      <Button
-        onClick={() => saveStory.mutate()}
-        className="w-full"
-        disabled={saveStory.isPending}
-      >
-        <Save className="h-4 w-4 mr-2" />
-        Save Story
-      </Button>
+      {!hideActions && (
+        <Button
+          onClick={() => saveStory.mutate()}
+          className="w-full"
+          disabled={saveStory.isPending}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save Story
+        </Button>
+      )}
 
       {selectedWord && (
         <WordModal

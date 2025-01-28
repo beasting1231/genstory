@@ -8,6 +8,7 @@ import SavedStories from "@/pages/SavedStories";
 import Settings from "@/pages/Settings";
 import MyVocab from "@/pages/MyVocab";
 import StudyDeck from "@/pages/StudyDeck";
+import StoryPage from "@/pages/StoryPage";
 import { Navigation } from "@/components/Navigation";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/saved" component={SavedStories} />
+        <Route path="/story/:id" component={StoryPage} />
         <Route path="/vocab" component={MyVocab} />
         <Route path="/study/:deckId" component={StudyDeck} />
         <Route path="/settings" component={Settings} />

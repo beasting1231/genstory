@@ -1,13 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SelectStory } from "@db/schema";
 import { format } from "date-fns";
-import { GeneratedStory } from "@/components/GeneratedStory";
-import { useState } from "react";
+import { useLocation } from "wouter";
 
 export default function SavedStories() {
-  const [selectedStory, setSelectedStory] = useState<SelectStory | null>(null);
+  const [, setLocation] = useLocation();
   const { data: stories, isLoading, error } = useQuery<SelectStory[]>({
     queryKey: ["/api/stories"],
   });
@@ -43,7 +41,7 @@ export default function SavedStories() {
             <Card 
               key={story.id} 
               className="shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => setSelectedStory(story)}
+              onClick={() => setLocation(`/story/${story.id}`)}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -72,21 +70,6 @@ export default function SavedStories() {
           ))}
         </div>
       </div>
-
-      <Dialog open={!!selectedStory} onOpenChange={(open) => !open && setSelectedStory(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {selectedStory && (
-            <GeneratedStory 
-              story={{
-                title: selectedStory.title,
-                content: selectedStory.content
-              }}
-              readingLevel={selectedStory.readingLevel}
-              wordCount={selectedStory.wordCount}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
