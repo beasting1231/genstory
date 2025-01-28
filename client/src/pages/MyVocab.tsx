@@ -117,16 +117,16 @@ export default function MyVocab() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col items-center justify-between mb-6">
           <h1 className="text-2xl md:text-3xl font-bold">My Vocabulary</h1>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowAddWord(true)} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Word
-            </Button>
-            <Button onClick={() => setShowCreateDeck(true)}>
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => setShowCreateDeck(true)} className="w-full">
               <Plus className="h-4 w-4 mr-2" />
               Create Deck
+            </Button>
+            <Button onClick={() => setShowAddWord(true)} variant="outline" className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Word
             </Button>
           </div>
         </div>
@@ -150,8 +150,8 @@ export default function MyVocab() {
               <TabsList className="relative w-full mb-4 overflow-hidden">
                 <div className="overflow-x-auto flex [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {decks?.map((deck) => (
-                    <TabsTrigger 
-                      key={deck.id} 
+                    <TabsTrigger
+                      key={deck.id}
                       value={deck.id.toString()}
                       className="shrink-0"
                     >
@@ -171,7 +171,7 @@ export default function MyVocab() {
                         >
                           <Trash2 className="h-5 w-5 text-white" />
                         </div>
-                        <Card 
+                        <Card
                           className={cn(
                             "shadow-md transition-transform duration-200 touch-pan-y relative bg-background",
                             "transform transition-transform duration-200 ease-out"
@@ -201,9 +201,9 @@ export default function MyVocab() {
           </>
         )}
 
-        <CreateDeckModal 
-          open={showCreateDeck} 
-          onOpenChange={setShowCreateDeck} 
+        <CreateDeckModal
+          open={showCreateDeck}
+          onOpenChange={setShowCreateDeck}
         />
 
         <AddWordModal
@@ -212,9 +212,9 @@ export default function MyVocab() {
           decks={decks || []}
         />
 
-        <AlertDialog 
+        <AlertDialog
           open={deleteConfirmation.isOpen}
-          onOpenChange={(isOpen) => 
+          onOpenChange={(isOpen) =>
             setDeleteConfirmation(prev => ({ ...prev, isOpen }))
           }
         >
