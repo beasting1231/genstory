@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import { Menu, Book, Plus, Settings as SettingsIcon } from "lucide-react";
+import { Menu, Book, Plus, Settings as SettingsIcon, BookOpen } from "lucide-react";
 
 const NavigationLink = ({ href, icon: Icon, children, onNavigate }: { href: string, icon: any, children: React.ReactNode, onNavigate?: () => void }) => {
   const [location] = useLocation();
@@ -43,6 +43,9 @@ export function Navigation() {
               <NavigationLink href="/saved" icon={Book} onNavigate={() => setOpen(false)}>
                 Saved Stories
               </NavigationLink>
+              <NavigationLink href="/vocab" icon={BookOpen} onNavigate={() => setOpen(false)}>
+                My Vocabulary
+              </NavigationLink>
               <NavigationLink href="/settings" icon={SettingsIcon} onNavigate={() => setOpen(false)}>
                 Settings
               </NavigationLink>
@@ -57,6 +60,9 @@ export function Navigation() {
           <div className="flex gap-2">
             <NavigationLink href="/saved" icon={Book}>
               Saved Stories
+            </NavigationLink>
+            <NavigationLink href="/vocab" icon={BookOpen}>
+              My Vocabulary
             </NavigationLink>
             <NavigationLink href="/settings" icon={SettingsIcon}>
               Settings
