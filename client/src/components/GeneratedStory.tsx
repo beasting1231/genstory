@@ -126,33 +126,34 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       <CardContent>
         <div className="space-y-4">
           {sentences.map((sentence, index) => (
-            <div key={index} className="space-y-2">
-              <p className="text-lg leading-relaxed">{sentence.original}</p>
-              <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
-                <Collapsible.Trigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    {sentence.isOpen ? (
-                      <ChevronUp className="h-4 w-4 mr-1" />
+            <div key={index}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-lg leading-relaxed flex-grow">{sentence.original}</p>
+                <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
+                  <Collapsible.Trigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      {sentence.isOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </Collapsible.Trigger>
+                  <Collapsible.Content className="pt-2 pl-4 border-l-2 border-primary/20">
+                    {translationQueries[index].isPending ? (
+                      <p className="text-sm text-muted-foreground">Loading translation...</p>
+                    ) : translationQueries[index].error ? (
+                      <p className="text-sm text-destructive">Failed to load translation</p>
                     ) : (
-                      <ChevronDown className="h-4 w-4 mr-1" />
+                      <p className="text-sm italic">{translationQueries[index].data}</p>
                     )}
-                    {sentence.isOpen ? "Hide" : "Show"} Translation
-                  </Button>
-                </Collapsible.Trigger>
-                <Collapsible.Content className="pt-2 pl-4 border-l-2 border-primary/20">
-                  {translationQueries[index].isPending ? (
-                    <p className="text-sm text-muted-foreground">Loading translation...</p>
-                  ) : translationQueries[index].error ? (
-                    <p className="text-sm text-destructive">Failed to load translation</p>
-                  ) : (
-                    <p className="text-sm italic">{translationQueries[index].data}</p>
-                  )}
-                </Collapsible.Content>
-              </Collapsible.Root>
+                  </Collapsible.Content>
+                </Collapsible.Root>
+              </div>
             </div>
           ))}
         </div>
