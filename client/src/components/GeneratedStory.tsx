@@ -235,20 +235,18 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="border-b pb-4">
-          <h1 className="text-3xl font-bold">{story.title}</h1>
-          <div className="mt-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">{story.title}</h1>
             <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
-              <div className="flex items-center gap-2">
-                <Collapsible.Trigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    {titleTranslationOpen ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                </Collapsible.Trigger>
-              </div>
+              <Collapsible.Trigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  {titleTranslationOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </Collapsible.Trigger>
               <Collapsible.Content className="pl-4 border-l-2 border-primary/20 mt-2">
                 {translationQueries[0].isPending || refreshingIndex === 0 ? (
                   <p className="text-sm text-muted-foreground">Loading translation...</p>
