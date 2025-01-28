@@ -153,11 +153,28 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/translate", async (req, res) => {
     try {
       const { sentence, targetLanguage } = req.body;
-      const translation = await translateSentence(sentence, targetLanguage);
+
+      if (!sentence) {
+        return res.status(400).json({ message: "Sentence is required" });
+      }
+
+      const translation = await translateSentence(sentence, targetLanguage || "English");
+
+      if (!translation) {
+        throw new Error("Translation failed");
+      }
+
       res.json({ translation });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error translating sentence:", error);
-      res.status(500).json({ message: "Failed to translate sentence" });
+      res.status(500).json({ 
+        message: error?.message || "Failed to translate sentence",
+        details: error?.error?.type === 'insufficient_quota' 
+          ? "API quota exceeded" 
+          : error?.error?.type === 'rate_limit_exceeded'
+          ? "Rate limit exceeded"
+          : undefined
+      });
     }
   });
 

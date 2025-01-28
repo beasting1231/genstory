@@ -48,13 +48,20 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sentence: story.title }),
+            body: JSON.stringify({ 
+              sentence: story.title,
+              targetLanguage: "English" // Add target language
+            }),
           });
-          if (!response.ok) throw new Error('Translation failed');
+          if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || 'Translation failed');
+          }
           const data = await response.json();
           return data.translation;
         },
         enabled: false,
+        retry: 1,
       },
       ...sentences.map((sentence) => ({
         queryKey: ['translation', sentence.original],
@@ -62,13 +69,20 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sentence: sentence.original }),
+            body: JSON.stringify({ 
+              sentence: sentence.original,
+              targetLanguage: "English" // Add target language
+            }),
           });
-          if (!response.ok) throw new Error('Translation failed');
+          if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || 'Translation failed');
+          }
           const data = await response.json();
           return data.translation;
         },
         enabled: false,
+        retry: 1,
       })),
     ],
   });
