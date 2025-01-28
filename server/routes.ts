@@ -90,7 +90,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Other existing routes remain unchanged
+  // Other existing routes
   app.post("/api/generate", async (req, res) => {
     try {
       const storyData = req.body;
@@ -175,6 +175,17 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error fetching vocabulary:", error);
       res.status(500).json({ message: "Failed to fetch vocabulary" });
+    }
+  });
+
+  app.delete("/api/vocabulary/:id", async (req, res) => {
+    try {
+      const vocabId = parseInt(req.params.id);
+      await db.delete(vocabulary).where(eq(vocabulary.id, vocabId));
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting vocabulary:", error);
+      res.status(500).json({ message: "Failed to delete vocabulary item" });
     }
   });
 
