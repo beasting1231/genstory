@@ -40,7 +40,7 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
         "X-Title": "AI Graded Reader Generator"
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-llm-67b-chat",
+        model: "mistralai/mistral-7b-instruct",
         messages: [
           {
             role: "system",
