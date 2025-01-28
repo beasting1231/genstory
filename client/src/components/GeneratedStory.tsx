@@ -100,36 +100,83 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     },
   });
 
-  const handleWordClick = (char: string, index: number, text: string) => {
-    // Get surrounding characters to try to detect the full word
-    // Look for word boundaries (spaces, punctuation) or just take a few characters around
-    const start = Math.max(0, index - 2);
-    const end = Math.min(text.length, index + 3);
-    const surroundingText = text.slice(start, end);
+  const findWordAtPosition = (text: string, index: number): string => {
+    // Look left and right for word boundaries (spaces, punctuation)
+    let start = index;
+    let end = index + 1;
 
-    // Extract the potential word containing the clicked character
-    const wordPattern = /[\p{L}\p{N}]+/gu;
-    const words = surroundingText.match(wordPattern) || [];
-    const clickedWord = words.find(word => word.includes(char)) || char;
+    // Look left for word start
+    while (start > 0 && /[\p{L}\p{N}]/u.test(text[start - 1])) {
+      start--;
+    }
 
-    getWordInfo.mutate({ 
-      word: clickedWord,
-      context: surroundingText
-    });
+    // Look right for word end
+    while (end < text.length && /[\p{L}\p{N}]/u.test(text[end])) {
+      end++;
+    }
+
+    return text.slice(start, end);
   };
 
-  const renderKoreanText = (text: string) => {
-    return text.split('').map((char, index) => (
-      <span
-        key={index}
-        onClick={() => handleWordClick(char, index, text)}
-        className="cursor-pointer hover:bg-primary/10 hover:text-primary rounded px-0.5 inline-block transition-colors"
-        role="button"
-        tabIndex={0}
-      >
-        {char}
-      </span>
-    ));
+  const handleClick = (text: string, index: number) => {
+    const word = findWordAtPosition(text, index);
+    const contextStart = Math.max(0, index - 10);
+    const contextEnd = Math.min(text.length, index + 10);
+    const context = text.slice(contextStart, contextEnd);
+
+    if (word) {
+      getWordInfo.mutate({ word, context });
+    }
+  };
+
+  const renderText = (text: string) => {
+    let result = [];
+    let currentWord = '';
+    let wordStart = 0;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      if (/[\p{L}\p{N}]/u.test(char)) {
+        // Part of a word
+        currentWord += char;
+      } else {
+        // Word boundary (space, punctuation, etc.)
+        if (currentWord) {
+          result.push(
+            <span
+              key={`word-${wordStart}`}
+              onClick={() => handleClick(text, wordStart)}
+              className="cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
+              role="button"
+              tabIndex={0}
+            >
+              {currentWord}
+            </span>
+          );
+          currentWord = '';
+        }
+        result.push(<span key={`char-${i}`}>{char}</span>);
+        wordStart = i + 1;
+      }
+    }
+
+    // Handle the last word if exists
+    if (currentWord) {
+      result.push(
+        <span
+          key={`word-${wordStart}`}
+          onClick={() => handleClick(text, wordStart)}
+          className="cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
+          role="button"
+          tabIndex={0}
+        >
+          {currentWord}
+        </span>
+      );
+    }
+
+    return result;
   };
 
   const toggleTitleTranslation = async () => {
@@ -185,13 +232,12 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     },
   });
 
-
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2 border-b pb-4">
           <h1 className="text-3xl font-bold flex-grow">
-            {renderKoreanText(story.title)}
+            {renderText(story.title)}
           </h1>
           <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
             <Collapsible.Trigger asChild>
@@ -223,7 +269,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           <div key={index} className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="text-lg leading-relaxed flex-grow">
-                {renderKoreanText(sentence.original)}
+                {renderText(sentence.original)}
               </div>
               <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
                 <Collapsible.Trigger asChild>
