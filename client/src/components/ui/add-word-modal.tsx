@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { SelectDeck } from "@db/schema";
+import { Wand2 } from "lucide-react";
 
 interface AddWordModalProps {
   open: boolean;
@@ -22,6 +23,37 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
   const [selectedDeckId, setSelectedDeckId] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const autofillWord = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/word-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word, context }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get word information");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setTranslation(data.translation);
+      setPartOfSpeech(data.partOfSpeech.toLowerCase());
+      toast({
+        title: "Success",
+        description: "Word information filled automatically",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to get word information. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const addWord = useMutation({
     mutationFn: async () => {
@@ -98,6 +130,15 @@ export function AddWordModal({ open, onOpenChange, decks }: AddWordModalProps) {
               onChange={(e) => setWord(e.target.value)}
               placeholder="Enter word"
             />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => autofillWord.mutate()}
+              disabled={!word || autofillWord.isPending}
+            >
+              <Wand2 className="h-4 w-4 mr-2" />
+              Autofill with AI
+            </Button>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Translation</label>
