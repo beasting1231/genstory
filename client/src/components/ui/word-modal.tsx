@@ -2,10 +2,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -66,31 +65,33 @@ export function WordModal({
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => onClose()}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{word}</DialogTitle>
-          <DialogDescription className="space-y-2 pt-3">
-            <div>
-              <span className="font-medium">Translation:</span> {translation}
-            </div>
-            <div>
-              <span className="font-medium">Part of Speech:</span> {partOfSpeech}
-            </div>
-            {context && (
-              <div>
-                <span className="font-medium">Context:</span>
-                <p className="mt-1 text-sm italic">"{context}"</p>
-              </div>
-            )}
-          </DialogDescription>
+          <DialogTitle className="text-2xl font-bold capitalize">{word}</DialogTitle>
         </DialogHeader>
-        <DialogFooter className="sm:justify-start">
+        <div className="space-y-4 pt-4">
+          <div>
+            <span className="font-medium">Translation:</span>
+            <p className="mt-1">{translation}</p>
+          </div>
+          <div>
+            <span className="font-medium">Part of Speech:</span>
+            <p className="mt-1 capitalize">{partOfSpeech}</p>
+          </div>
+          {context && (
+            <div>
+              <span className="font-medium">Context:</span>
+              <p className="mt-1 text-sm italic">"{context}"</p>
+            </div>
+          )}
+        </div>
+        <DialogFooter className="mt-6">
           <Button
             type="button"
-            variant="default"
             onClick={() => saveToVocab.mutate()}
             disabled={saveToVocab.isPending}
+            className="w-full"
           >
             <Save className="h-4 w-4 mr-2" />
             Save to My Vocabulary

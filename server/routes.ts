@@ -6,6 +6,43 @@ import { stories, vocabulary } from "@db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
+  app.post("/api/word-info", async (req, res) => {
+    try {
+      const { word, context } = req.body;
+      console.log("Processing word info request for:", word); // Debug log
+
+      // Get dictionary info
+      const response = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`
+      );
+
+      if (!response.ok) {
+        console.error("Dictionary API error:", await response.text());
+        throw new Error("Failed to fetch word information");
+      }
+
+      const data = await response.json();
+      const meanings = data[0]?.meanings || [];
+      const partOfSpeech = meanings[0]?.partOfSpeech || "unknown";
+
+      // Get translation
+      const translation = await translateSentence(word);
+
+      console.log("Sending word info response:", { word, translation, partOfSpeech, context }); // Debug log
+
+      res.json({
+        word,
+        translation,
+        partOfSpeech,
+        context,
+      });
+    } catch (error) {
+      console.error("Error fetching word info:", error);
+      res.status(500).json({ message: "Failed to get word information" });
+    }
+  });
+
+  // Keep existing routes unchanged
   app.post("/api/generate", async (req, res) => {
     try {
       const storyData = req.body;
@@ -35,36 +72,6 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error translating sentence:", error);
       res.status(500).json({ message: "Failed to translate sentence" });
-    }
-  });
-
-  app.post("/api/word-info", async (req, res) => {
-    try {
-      const { word, context } = req.body;
-      const response = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch word information");
-      }
-
-      const data = await response.json();
-      const meanings = data[0]?.meanings || [];
-      const partOfSpeech = meanings[0]?.partOfSpeech || "unknown";
-
-      // Get translation
-      const translation = await translateSentence(word);
-
-      res.json({
-        word,
-        translation,
-        partOfSpeech,
-        context,
-      });
-    } catch (error) {
-      console.error("Error fetching word info:", error);
-      res.status(500).json({ message: "Failed to get word information" });
     }
   });
 
