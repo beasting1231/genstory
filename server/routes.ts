@@ -6,6 +6,25 @@ import { stories, vocabulary, decks } from "@db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
+  // Get single story route
+  app.get("/api/stories/:id", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const story = await db.query.stories.findFirst({
+        where: eq(stories.id, storyId),
+      });
+
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      res.json(story);
+    } catch (error) {
+      console.error("Error fetching story:", error);
+      res.status(500).json({ message: "Failed to fetch story" });
+    }
+  });
+
   // Deck routes
   app.post("/api/decks", async (req, res) => {
     try {
@@ -167,10 +186,10 @@ export function registerRoutes(app: Express): Server {
       res.json({ translation });
     } catch (error: any) {
       console.error("Error translating sentence:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: error?.message || "Failed to translate sentence",
-        details: error?.error?.type === 'insufficient_quota' 
-          ? "API quota exceeded" 
+        details: error?.error?.type === 'insufficient_quota'
+          ? "API quota exceeded"
           : error?.error?.type === 'rate_limit_exceeded'
           ? "Rate limit exceeded"
           : undefined
