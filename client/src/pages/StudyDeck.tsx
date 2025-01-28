@@ -135,7 +135,6 @@ export default function StudyDeck({ params }: StudyDeckProps) {
               )}
               drag="x"
               dragElastic={0.7}
-              dragSnapToOrigin={true}
               onDragEnd={onDragEnd}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
