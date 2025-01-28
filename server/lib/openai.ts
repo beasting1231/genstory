@@ -22,29 +22,72 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
     - C1: Rich vocabulary and idiomatic expressions
     - C2: Native-level complexity
 
-    Provide the response in JSON format with a title and content field.
+    Return a JSON object with exactly two fields:
+    {
+      "title": "The story title",
+      "content": "The full story content"
+    }
   `;
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://github.com/openrouter-ai/openrouter-examples",
-      "X-Title": "AI Graded Reader Generator"
-    },
-    body: JSON.stringify({
-      model: "deepseek-ai/deepseek-llm-67b-chat",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" }
-    })
-  });
+  try {
+    console.log("Sending request to OpenRouter API...");
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": "https://github.com/openrouter-ai/openrouter-examples",
+        "X-Title": "AI Graded Reader Generator"
+      },
+      body: JSON.stringify({
+        model: "deepseek/deepseek-llm-67b-chat",
+        messages: [
+          {
+            role: "system",
+            content: "You are a creative writing assistant that creates stories based on user parameters. Always return stories in JSON format with 'title' and 'content' fields."
+          },
+          { 
+            role: "user", 
+            content: prompt 
+          }
+        ],
+        temperature: 0.7,
+        format: "json"
+      })
+    });
 
-  if (!response.ok) {
-    throw new Error(`OpenRouter API error: ${response.status}`);
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("OpenRouter API error response:", errorData);
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
+    }
+
+    const result = await response.json();
+    console.log("OpenRouter API response:", JSON.stringify(result, null, 2));
+
+    if (!result.choices?.[0]?.message?.content) {
+      throw new Error("Invalid response format from OpenRouter API");
+    }
+
+    let parsedContent: StoryResponse;
+    try {
+      const content = result.choices[0].message.content;
+      console.log("Attempting to parse content:", content);
+
+      // If content is already an object, use it directly
+      parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+
+      if (!parsedContent.title || !parsedContent.content) {
+        throw new Error("Missing required fields in story response");
+      }
+    } catch (error: any) {
+      console.error("Parse error:", error);
+      throw new Error("Failed to parse story response: " + error.message);
+    }
+
+    return parsedContent;
+  } catch (error: any) {
+    console.error("Error details:", error);
+    throw error;
   }
-
-  const result = await response.json();
-  const content = JSON.parse(result.choices[0].message.content || '{"title": "", "content": ""}');
-  return content as StoryResponse;
 }
