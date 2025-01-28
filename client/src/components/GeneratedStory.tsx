@@ -22,13 +22,13 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   const { toast } = useToast();
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
-    return story.content
-      .match(/[^.!?]+[.!?]+/g)
-      ?.map(sentence => ({
-        original: sentence.trim(),
-        isOpen: false,
-        translation: undefined,
-      })) || [];
+    // Custom split that keeps quoted text together
+    const matches = story.content.match(/[^.!?"]+[.!?"]+\s*(?:[^"\.!?]+[\.!?]+)?/g) || [];
+    return matches.map(sentence => ({
+      original: sentence.trim(),
+      isOpen: false,
+      translation: undefined,
+    }));
   });
 
   // Create queries for sentence translations and title translation
