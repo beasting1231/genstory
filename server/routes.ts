@@ -37,13 +37,24 @@ export function registerRoutes(app: Express): Server {
   // Word info route
   app.post("/api/word-info", async (req, res) => {
     try {
-      const { word } = req.body;
-      console.log("Processing word info request for:", word);
+      const { word, translation } = req.body;
+      const isKorean = word && /[\u3131-\u314e\u314f-\u3163\uac00-\ud7a3]/.test(word);
+      const searchTerm = word || translation;
 
-      const prompt = `Analyze this Korean word: "${word}"
+      console.log("Processing word info request for:", searchTerm);
+
+      const prompt = isKorean
+        ? `Analyze this Korean word: "${searchTerm}"
     Respond with a JSON object in this format:
     {
       "translation": "English translation",
+      "partOfSpeech": "part of speech (noun, verb, adjective, etc.)",
+      "context": "A simple, beginner-friendly Korean sentence using this word. Keep it very short (max 5 words)."
+    }`
+        : `Find the Korean word for this English word: "${searchTerm}"
+    Respond with a JSON object in this format:
+    {
+      "word": "Korean word",
       "partOfSpeech": "part of speech (noun, verb, adjective, etc.)",
       "context": "A simple, beginner-friendly Korean sentence using this word. Keep it very short (max 5 words)."
     }`;
@@ -79,12 +90,24 @@ export function registerRoutes(app: Express): Server {
 
       console.log("Word analysis result:", result);
 
-      res.json({
-        word,
-        translation: result.translation,
-        partOfSpeech: result.partOfSpeech,
-        context: result.context,
-      });
+      // For Korean->English
+      if (isKorean) {
+        res.json({
+          word: searchTerm,
+          translation: result.translation,
+          partOfSpeech: result.partOfSpeech,
+          context: result.context,
+        });
+      } 
+      // For English->Korean
+      else {
+        res.json({
+          word: result.word,
+          translation: searchTerm,
+          partOfSpeech: result.partOfSpeech,
+          context: result.context,
+        });
+      }
     } catch (error) {
       console.error("Error analyzing word:", error);
       res.status(500).json({ message: "Failed to get word information" });

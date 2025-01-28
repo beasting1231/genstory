@@ -40,10 +40,12 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
 
   const autofillWord = useMutation({
     mutationFn: async () => {
+      // Send whichever field is filled
+      const payload = word ? { word } : { translation };
       const response = await fetch("/api/word-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -53,6 +55,7 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
       return response.json();
     },
     onSuccess: (data) => {
+      setWord(data.word);
       setTranslation(data.translation);
       if (data.partOfSpeech) {
         setPartOfSpeech(data.partOfSpeech.toLowerCase());
@@ -77,8 +80,8 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
   const addOrUpdateWord = useMutation({
     mutationFn: async () => {
       const method = wordToEdit ? "PUT" : "POST";
-      const url = wordToEdit 
-        ? `/api/vocabulary/${wordToEdit.id}` 
+      const url = wordToEdit
+        ? `/api/vocabulary/${wordToEdit.id}`
         : "/api/vocabulary";
 
       const response = await fetch(url, {
@@ -116,8 +119,8 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
     onError: () => {
       toast({
         title: "Error",
-        description: wordToEdit 
-          ? "Failed to update word. Please try again." 
+        description: wordToEdit
+          ? "Failed to update word. Please try again."
           : "Failed to add word. Please try again.",
         variant: "destructive",
       });
@@ -156,15 +159,6 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
               onChange={(e) => setWord(e.target.value)}
               placeholder="Enter word"
             />
-            <Button
-              variant="secondary"
-              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg hover:shadow-indigo-500/25 transition-all duration-200 text-white"
-              onClick={() => autofillWord.mutate()}
-              disabled={!word || autofillWord.isPending}
-            >
-              <Wand2 className="h-4 w-4 mr-2" />
-              {autofillWord.isPending ? "Filling..." : "Autofill with AI"}
-            </Button>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Translation</label>
@@ -173,6 +167,15 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
               onChange={(e) => setTranslation(e.target.value)}
               placeholder="Enter translation"
             />
+            <Button
+              variant="secondary"
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg hover:shadow-indigo-500/25 transition-all duration-200 text-white"
+              onClick={() => autofillWord.mutate()}
+              disabled={(!word && !translation) || autofillWord.isPending}
+            >
+              <Wand2 className="h-4 w-4 mr-2" />
+              {autofillWord.isPending ? "Filling..." : "Autofill with AI"}
+            </Button>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Part of Speech (optional)</label>
@@ -205,8 +208,8 @@ export function AddWordModal({ open, onOpenChange, decks, wordToEdit }: AddWordM
             onClick={() => addOrUpdateWord.mutate()}
             disabled={!word || !translation || !selectedDeckId || addOrUpdateWord.isPending}
           >
-            {addOrUpdateWord.isPending 
-              ? "Saving..." 
+            {addOrUpdateWord.isPending
+              ? "Saving..."
               : wordToEdit ? "Update Word" : "Add Word"}
           </Button>
         </div>
