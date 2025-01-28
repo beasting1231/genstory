@@ -101,11 +101,19 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   });
 
   const handleWordClick = (char: string, index: number, text: string) => {
-    const start = Math.max(0, index - 3);
-    const end = Math.min(text.length, index + 4);
+    // Get surrounding characters to try to detect the full word
+    // Look for word boundaries (spaces, punctuation) or just take a few characters around
+    const start = Math.max(0, index - 2);
+    const end = Math.min(text.length, index + 3);
     const surroundingText = text.slice(start, end);
+
+    // Extract the potential word containing the clicked character
+    const wordPattern = /[\p{L}\p{N}]+/gu;
+    const words = surroundingText.match(wordPattern) || [];
+    const clickedWord = words.find(word => word.includes(char)) || char;
+
     getWordInfo.mutate({ 
-      word: char,
+      word: clickedWord,
       context: surroundingText
     });
   };
@@ -115,7 +123,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       <span
         key={index}
         onClick={() => handleWordClick(char, index, text)}
-        className="cursor-pointer hover:bg-primary/10 hover:text-primary rounded px-0.5 inline-block"
+        className="cursor-pointer hover:bg-primary/10 hover:text-primary rounded px-0.5 inline-block transition-colors"
         role="button"
         tabIndex={0}
       >

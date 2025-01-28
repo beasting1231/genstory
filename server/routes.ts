@@ -12,11 +12,16 @@ export function registerRoutes(app: Express): Server {
       console.log("Processing word info request for:", word);
 
       // For Korean words, use OpenAI for both translation and part of speech
-      const prompt = `Analyze this Korean word: "${word}"
+      const prompt = `Analyze this Korean word or character: "${word}"
+      Consider the context: "${context}"
+
+      If this is part of a larger word, try to identify the complete word and its meaning.
+
       Respond with a JSON object in this format:
       {
         "translation": "English translation",
-        "partOfSpeech": "part of speech (noun, verb, adjective, etc.)"
+        "partOfSpeech": "part of speech (noun, verb, adjective, particle, etc.)",
+        "note": "Optional note about usage or if this is part of a larger word"
       }`;
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -30,7 +35,7 @@ export function registerRoutes(app: Express): Server {
           messages: [
             {
               role: "system",
-              content: "You are a Korean language expert. Provide accurate translations and grammatical analysis of Korean words.",
+              content: "You are a Korean language expert. Provide accurate translations and grammatical analysis of Korean words and particles. You understand Korean word boundaries and can identify when a character is part of a larger word.",
             },
             {
               role: "user",
@@ -55,6 +60,7 @@ export function registerRoutes(app: Express): Server {
         translation: result.translation,
         partOfSpeech: result.partOfSpeech,
         context,
+        note: result.note
       });
     } catch (error) {
       console.error("Error analyzing word:", error);
