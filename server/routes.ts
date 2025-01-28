@@ -34,6 +34,20 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.delete("/api/decks/:id", async (req, res) => {
+    try {
+      const deckId = parseInt(req.params.id);
+
+      // First delete all vocabulary items in the deck (cascade is handled by DB)
+      await db.delete(decks).where(eq(decks.id, deckId));
+
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting deck:", error);
+      res.status(500).json({ message: "Failed to delete deck" });
+    }
+  });
+
   // Word info route
   app.post("/api/word-info", async (req, res) => {
     try {
@@ -98,7 +112,7 @@ export function registerRoutes(app: Express): Server {
           partOfSpeech: result.partOfSpeech,
           context: result.context,
         });
-      } 
+      }
       // For English->Korean
       else {
         res.json({

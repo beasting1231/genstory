@@ -35,6 +35,7 @@ export default function MyVocab() {
     deckId: null,
     vocabId: null,
   });
+  const [selectedTab, setSelectedTab] = useState<string>("");
   const touchStartX = useRef<number | null>(null);
   const [swipedCards, setSwipedCards] = useState<{ [key: number]: number }>({});
   const queryClient = useQueryClient();
@@ -45,7 +46,7 @@ export default function MyVocab() {
   });
 
   const deleteVocab = useMutation({
-    mutationFn: async ({ deckId, vocabId }: { deckId: number; vocabId: number }) => {
+    mutationFn: async ({ vocabId }: { vocabId: number }) => {
       const response = await fetch(`/api/vocabulary/${vocabId}`, {
         method: "DELETE",
       });
@@ -56,6 +57,23 @@ export default function MyVocab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/decks"] });
+    },
+  });
+
+  const deleteDeck = useMutation({
+    mutationFn: async (deckId: number) => {
+      const response = await fetch(`/api/decks/${deckId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete deck");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/decks"] });
+      // Reset selected tab to first deck or empty if no decks
+      setSelectedTab(decks?.[0]?.id.toString() || "");
     },
   });
 
@@ -149,17 +167,34 @@ export default function MyVocab() {
         ) : (
           <>
             <h2 className="text-lg font-medium mb-2">My Decks:</h2>
-            <Tabs defaultValue={decks?.[0]?.id?.toString()}>
+            <Tabs 
+              value={selectedTab || decks?.[0]?.id?.toString()} 
+              onValueChange={setSelectedTab}
+            >
               <TabsList className="relative w-full mb-4 overflow-hidden">
                 <div className="overflow-x-auto flex [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {decks?.map((deck) => (
-                    <TabsTrigger
-                      key={deck.id}
-                      value={deck.id.toString()}
-                      className="shrink-0"
-                    >
-                      {deck.name}
-                    </TabsTrigger>
+                    <div key={deck.id} className="flex items-center gap-1">
+                      <TabsTrigger
+                        value={deck.id.toString()}
+                        className="shrink-0"
+                      >
+                        {deck.name}
+                      </TabsTrigger>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleteConfirmation({
+                          isOpen: true,
+                          deckId: deck.id,
+                          vocabId: null,
+                        })}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete deck</span>
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </TabsList>
@@ -252,20 +287,27 @@ export default function MyVocab() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Word</AlertDialogTitle>
+              <AlertDialogTitle>
+                {deleteConfirmation.deckId && !deleteConfirmation.vocabId
+                  ? "Delete Deck"
+                  : "Delete Word"}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this word? This action cannot be undone.
+                {deleteConfirmation.deckId && !deleteConfirmation.vocabId
+                  ? "Are you sure you want to delete this deck? This will delete all words in the deck. This action cannot be undone."
+                  : "Are you sure you want to delete this word? This action cannot be undone."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
-                  if (deleteConfirmation.deckId && deleteConfirmation.vocabId) {
-                    deleteVocab.mutate({
-                      deckId: deleteConfirmation.deckId,
-                      vocabId: deleteConfirmation.vocabId,
-                    });
+                  if (deleteConfirmation.deckId) {
+                    if (deleteConfirmation.vocabId) {
+                      deleteVocab.mutate({ vocabId: deleteConfirmation.vocabId });
+                    } else {
+                      deleteDeck.mutate(deleteConfirmation.deckId);
+                    }
                   }
                   setDeleteConfirmation({ isOpen: false, deckId: null, vocabId: null });
                 }}
