@@ -31,6 +31,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [selectedWord, setSelectedWord] = useState<WordInfo | null>(null);
   const [showWordModal, setShowWordModal] = useState(false);
+  const [refreshingIndex, setRefreshingIndex] = useState<number | null>(null);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
     const matches = story.content.match(/(?:[^.!?"]+|"[^"]*"[^.!?]*)+[.!?]+/g) || [];
     return matches.map(sentence => ({
@@ -47,7 +48,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       {
         queryKey: ['translation', story.title],
         queryFn: async () => {
-          console.log('Translating title:', story.title);
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -64,7 +64,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           }
 
           const data = await response.json();
-          console.log('Translation response:', data);
           return data.translation;
         },
         enabled: false,
@@ -73,7 +72,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       ...sentences.map((sentence) => ({
         queryKey: ['translation', sentence.original],
         queryFn: async () => {
-          console.log('Translating sentence:', sentence.original);
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -90,7 +88,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           }
 
           const data = await response.json();
-          console.log('Translation response:', data);
           return data.translation;
         },
         enabled: false,
@@ -98,6 +95,28 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       })),
     ],
   });
+
+  const retranslate = useCallback(async (index: number) => {
+    try {
+      setRefreshingIndex(index);
+      const query = translationQueries[index];
+      await query.refetch();
+      setRefreshingIndex(null);
+
+      toast({
+        title: "Success",
+        description: "Translation updated",
+      });
+    } catch (error) {
+      console.error('Retranslation error:', error);
+      setRefreshingIndex(null);
+      toast({
+        title: "Error",
+        description: "Failed to update translation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [translationQueries, toast]);
 
   const handleWordClick = useCallback((word: string, context: string) => {
     const cleanWord = word.replace(/[^\p{L}']/gu, '').trim();
@@ -200,26 +219,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       });
     },
   });
-
-  const retranslate = useCallback(async (index: number) => {
-    try {
-      const query = translationQueries[index];
-      await query.refetch();
-
-      toast({
-        title: "Success",
-        description: "Translation updated",
-      });
-    } catch (error) {
-      console.error('Retranslation error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update translation. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [translationQueries, toast]);
-
   const renderWord = useCallback((word: string, context: string) => {
     if (!word.trim()) return " ";
     if (/^[,.!?;:()]+$/.test(word)) return word;
@@ -254,7 +253,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
               </Collapsible.Trigger>
               <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
                 <div className="flex flex-col gap-2">
-                  {translationQueries[0].isPending ? (
+                  {translationQueries[0].isPending || refreshingIndex === 0 ? (
                     <p className="text-sm text-muted-foreground">Loading translation...</p>
                   ) : translationQueries[0].error ? (
                     <p className="text-sm text-destructive">
@@ -265,18 +264,16 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                   ) : (
                     <div className="flex items-center justify-between w-full">
                       <p className="text-sm italic">{translationQueries[0].data}</p>
-                      {titleTranslationOpen && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 ml-2"
-                          disabled={translationQueries[0].isPending}
-                          onClick={() => retranslate(0)}
-                        >
-                          <RotateCw className={`h-4 w-4 ${translationQueries[0].isPending ? 'animate-spin' : ''}`} />
-                          <span className="sr-only">Retranslate title</span>
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 ml-2"
+                        disabled={translationQueries[0].isPending || refreshingIndex === 0}
+                        onClick={() => retranslate(0)}
+                      >
+                        <RotateCw className={`h-4 w-4 ${(translationQueries[0].isPending || refreshingIndex === 0) ? 'animate-spin' : ''}`} />
+                        <span className="sr-only">Retranslate title</span>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -303,36 +300,19 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                     </span>
                   ))}
                 </div>
-                <div className="flex flex-col items-center gap-2">
-                  <Collapsible.Trigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      {sentence.isOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </Collapsible.Trigger>
-                  {sentence.isOpen && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 ml-2"
-                      disabled={translationQueries[index + 1].isPending}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        retranslate(index + 1);
-                      }}
-                    >
-                      <RotateCw className={`h-4 w-4 ${translationQueries[index + 1].isPending ? 'animate-spin' : ''}`} />
-                      <span className="sr-only">Retranslate sentence</span>
-                    </Button>
-                  )}
-                </div>
+                <Collapsible.Trigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    {sentence.isOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </Collapsible.Trigger>
               </div>
               <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
                 <div className="flex flex-col gap-2">
-                  {translationQueries[index + 1].isPending ? (
+                  {translationQueries[index + 1].isPending || refreshingIndex === index + 1 ? (
                     <p className="text-sm text-muted-foreground">Loading translation...</p>
                   ) : translationQueries[index + 1].error ? (
                     <p className="text-sm text-destructive">
@@ -343,21 +323,19 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                   ) : (
                     <div className="flex items-center justify-between w-full">
                       <p className="text-sm italic">{translationQueries[index + 1].data}</p>
-                      {sentence.isOpen && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 ml-2"
-                          disabled={translationQueries[index + 1].isPending}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            retranslate(index + 1);
-                          }}
-                        >
-                          <RotateCw className={`h-4 w-4 ${translationQueries[index + 1].isPending ? 'animate-spin' : ''}`} />
-                          <span className="sr-only">Retranslate sentence</span>
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 ml-2"
+                        disabled={translationQueries[index + 1].isPending || refreshingIndex === index + 1}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          retranslate(index + 1);
+                        }}
+                      >
+                        <RotateCw className={`h-4 w-4 ${(translationQueries[index + 1].isPending || refreshingIndex === index + 1) ? 'animate-spin' : ''}`} />
+                        <span className="sr-only">Retranslate sentence</span>
+                      </Button>
                     </div>
                   )}
                 </div>
