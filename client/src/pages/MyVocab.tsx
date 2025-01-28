@@ -62,56 +62,38 @@ export default function MyVocab() {
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue={decks?.[0]?.id?.toString()}>
-            <TabsList className="relative w-full mb-4 overflow-hidden">
-              <div className="overflow-x-auto flex [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {decks?.map((deck) => (
-                  <TabsTrigger 
-                    key={deck.id} 
-                    value={deck.id.toString()}
-                    className="shrink-0"
-                  >
-                    {deck.name}
-                  </TabsTrigger>
-                ))}
-              </div>
-            </TabsList>
-
-            {decks?.map((deck) => (
-              <TabsContent key={deck.id} value={deck.id.toString()}>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {deck.vocabulary?.map((item) => (
-                    <Card key={item.id} className="shadow-md">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-xl font-bold">{item.word}</CardTitle>
-                          <div className="text-sm text-muted-foreground">
-                            {format(new Date(item.createdAt), "PP")}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-1">
-                          <p>
-                            <span className="font-medium">Translation:</span> {item.translation}
-                          </p>
-                          <p>
-                            <span className="font-medium">Part of Speech:</span>{" "}
-                            {item.partOfSpeech}
-                          </p>
-                          {item.context && (
-                            <p className="text-sm text-muted-foreground mt-2 italic">
-                              "{item.context}"
-                            </p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+          <>
+            <h2 className="text-lg font-medium mb-2">My Decks:</h2>
+            <Tabs defaultValue={decks?.[0]?.id?.toString()}>
+              <TabsList className="relative w-full mb-4 overflow-hidden">
+                <div className="overflow-x-auto flex [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {decks?.map((deck) => (
+                    <TabsTrigger 
+                      key={deck.id} 
+                      value={deck.id.toString()}
+                      className="shrink-0"
+                    >
+                      {deck.name}
+                    </TabsTrigger>
                   ))}
                 </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+              </TabsList>
+
+              {decks?.map((deck) => (
+                <TabsContent key={deck.id} value={deck.id.toString()}>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {deck.vocabulary?.map((item) => (
+                      <Card key={item.id} className="shadow-md">
+                        <CardContent className="pt-6">
+                          <p className="text-xl font-bold text-center">{item.word}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </>
         )}
 
         <CreateDeckModal 
