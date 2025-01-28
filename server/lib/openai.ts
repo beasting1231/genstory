@@ -30,7 +30,7 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
     console.log("Sending request to OpenAI API...");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
