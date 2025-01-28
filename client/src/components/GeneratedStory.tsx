@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueries } from "@tanstack/react-query";
 import { StoryResponse } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Save } from "lucide-react";
+import { Save, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface GeneratedStoryProps {
   story: StoryResponse;
@@ -11,8 +13,65 @@ interface GeneratedStoryProps {
   wordCount: number;
 }
 
+interface SentenceTranslation {
+  original: string;
+  isOpen: boolean;
+  translation?: string;
+}
+
 export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStoryProps) {
   const { toast } = useToast();
+  const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
+    // Split content into sentences (basic splitting by . ! ?)
+    return story.content
+      .match(/[^.!?]+[.!?]+/g)
+      ?.map(sentence => ({
+        original: sentence.trim(),
+        isOpen: false,
+        translation: undefined,
+      })) || [];
+  });
+
+  // Create multiple queries for translations
+  const translationQueries = useQueries({
+    queries: sentences.map((sentence, index) => ({
+      queryKey: ['translation', sentence.original],
+      queryFn: async () => {
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sentence: sentence.original,
+            targetLanguage: localStorage.getItem('targetLanguage') || 'Spanish'
+          }),
+        });
+        if (!response.ok) throw new Error('Translation failed');
+        const data = await response.json();
+        return data.translation;
+      },
+      enabled: false, // Don't fetch automatically
+    })),
+  });
+
+  const toggleTranslation = async (index: number) => {
+    const newSentences = [...sentences];
+    newSentences[index].isOpen = !newSentences[index].isOpen;
+
+    // If opening and translation not loaded yet, fetch it
+    if (newSentences[index].isOpen && !sentences[index].translation) {
+      try {
+        translationQueries[index].refetch();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load translation",
+          variant: "destructive",
+        });
+      }
+    }
+
+    setSentences(newSentences);
+  };
 
   const saveStory = useMutation({
     mutationFn: async () => {
@@ -65,11 +124,37 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
         </div>
       </CardHeader>
       <CardContent>
-        <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none">
-          {story.content.split("\n").map((paragraph, index) => (
-            <p key={index} className="mb-4">
-              {paragraph}
-            </p>
+        <div className="space-y-4">
+          {sentences.map((sentence, index) => (
+            <div key={index} className="space-y-2">
+              <p className="text-lg leading-relaxed">{sentence.original}</p>
+              <Collapsible open={sentence.isOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => toggleTranslation(index)}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {sentence.isOpen ? (
+                      <ChevronUp className="h-4 w-4 mr-1" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 mr-1" />
+                    )}
+                    {sentence.isOpen ? "Hide" : "Show"} Translation
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-2 pl-4 border-l-2 border-primary/20">
+                  {translationQueries[index].isPending ? (
+                    <p className="text-sm text-muted-foreground">Loading translation...</p>
+                  ) : translationQueries[index].error ? (
+                    <p className="text-sm text-destructive">Failed to load translation</p>
+                  ) : (
+                    <p className="text-sm italic">{translationQueries[index].data}</p>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
           ))}
         </div>
       </CardContent>

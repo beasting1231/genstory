@@ -115,3 +115,33 @@ export async function generateStory(data: StoryFormData): Promise<StoryResponse>
     throw error;
   }
 }
+
+export async function translateSentence(sentence: string, targetLanguage: string = "English"): Promise<string> {
+  const prompt = `Translate this sentence to ${targetLanguage}:\n"${sentence}"`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a precise translator. Translate exactly what is provided, maintaining the tone and meaning.",
+        },
+        { 
+          role: "user", 
+          content: prompt 
+        }
+      ],
+      temperature: 0.3,
+    });
+
+    if (!response.choices[0].message.content) {
+      throw new Error("No translation in OpenAI response");
+    }
+
+    return response.choices[0].message.content.trim();
+  } catch (error: any) {
+    console.error("Error translating sentence:", error);
+    throw error;
+  }
+}
