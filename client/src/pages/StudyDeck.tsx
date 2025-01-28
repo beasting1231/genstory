@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SelectDeck, SelectVocab } from "@db/schema";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, X } from "lucide-react";
+import { ArrowLeft, Check, X, ThumbsUp, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StudyDeckProps {
@@ -20,14 +20,31 @@ export default function StudyDeck({ params }: StudyDeckProps) {
 
   const dragX = useMotionValue(0);
   const swipeProgress = useTransform(dragX, [-200, 0, 200], [-1, 0, 1]);
+
+  // Transform for background color
   const cardBackground = useTransform(
     swipeProgress,
-    [-1, 0, 1],
+    [-1, -0.5, 0, 0.5, 1],
     [
-      "rgba(239, 68, 68, 0.2)", // Red for "don't remember"
-      "rgba(255, 255, 255, 0)", // Transparent for neutral
-      "rgba(34, 197, 94, 0.2)", // Green for "remember"
+      "rgba(239, 68, 68, 0.3)", // Full red
+      "rgba(239, 68, 68, 0.2)", // Light red
+      "rgba(255, 255, 255, 0)", // Neutral
+      "rgba(34, 197, 94, 0.2)", // Light green
+      "rgba(34, 197, 94, 0.3)", // Full green
     ]
+  );
+
+  // Transform for thumbs opacity
+  const thumbsUpOpacity = useTransform(
+    swipeProgress,
+    [-0.1, 0, 0.5, 1],
+    [0, 0, 0.5, 1]
+  );
+
+  const thumbsDownOpacity = useTransform(
+    swipeProgress,
+    [-1, -0.5, 0, 0.1],
+    [1, 0.5, 0, 0]
   );
 
   const { data: decks } = useQuery<SelectDeck[]>({
@@ -161,6 +178,20 @@ export default function StudyDeck({ params }: StudyDeckProps) {
                 transition: { duration: 0.2 }
               }}
             >
+              {/* Thumbs up/down overlay */}
+              <motion.div 
+                className="absolute inset-0 pointer-events-none"
+                style={{ opacity: thumbsUpOpacity }}
+              >
+                <ThumbsUp className="absolute top-4 right-4 h-12 w-12 text-green-500" />
+              </motion.div>
+              <motion.div 
+                className="absolute inset-0 pointer-events-none"
+                style={{ opacity: thumbsDownOpacity }}
+              >
+                <ThumbsDown className="absolute top-4 left-4 h-12 w-12 text-red-500" />
+              </motion.div>
+
               <div
                 className="w-full h-full"
                 onClick={() => setIsFlipped(!isFlipped)}
