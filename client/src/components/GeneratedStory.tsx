@@ -21,8 +21,8 @@ interface SentenceTranslation {
 
 export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStoryProps) {
   const { toast } = useToast();
+  const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
-    // Split content into sentences (basic splitting by . ! ?)
     return story.content
       .match(/[^.!?]+[.!?]+/g)
       ?.map(sentence => ({
@@ -32,35 +32,71 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       })) || [];
   });
 
-  // Create multiple queries for translations
+  // Create queries for sentence translations and title translation
   const translationQueries = useQueries({
-    queries: sentences.map((sentence, index) => ({
-      queryKey: ['translation', sentence.original],
-      queryFn: async () => {
-        const response = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sentence: sentence.original,
-            targetLanguage: 'English'
-          }),
-        });
-        if (!response.ok) throw new Error('Translation failed');
-        const data = await response.json();
-        return data.translation;
+    queries: [
+      // Title translation query
+      {
+        queryKey: ['translation', story.title],
+        queryFn: async () => {
+          const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sentence: story.title,
+              targetLanguage: 'English'
+            }),
+          });
+          if (!response.ok) throw new Error('Translation failed');
+          const data = await response.json();
+          return data.translation;
+        },
+        enabled: false,
       },
-      enabled: false, // Don't fetch automatically
-    })),
+      // Sentence translations
+      ...sentences.map((sentence) => ({
+        queryKey: ['translation', sentence.original],
+        queryFn: async () => {
+          const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sentence: sentence.original,
+              targetLanguage: 'English'
+            }),
+          });
+          if (!response.ok) throw new Error('Translation failed');
+          const data = await response.json();
+          return data.translation;
+        },
+        enabled: false,
+      })),
+    ],
   });
+
+  const toggleTitleTranslation = async () => {
+    setTitleTranslationOpen(!titleTranslationOpen);
+    if (!titleTranslationOpen && !translationQueries[0].data) {
+      try {
+        translationQueries[0].refetch();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load title translation",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const toggleTranslation = async (index: number) => {
     const newSentences = [...sentences];
     newSentences[index].isOpen = !newSentences[index].isOpen;
 
-    // If opening and translation not loaded yet, fetch it
     if (newSentences[index].isOpen && !sentences[index].translation) {
       try {
-        translationQueries[index].refetch();
+        // Add 1 to index because the first query is for the title
+        translationQueries[index + 1].refetch();
       } catch (error) {
         toast({
           title: "Error",
@@ -110,17 +146,36 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   return (
     <Card className="bg-white">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold">{story.title}</CardTitle>
-          <Button 
-            onClick={() => saveStory.mutate()} 
-            variant="outline" 
-            size="sm"
-            disabled={saveStory.isPending}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Save Story
-          </Button>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-2xl font-bold flex-grow">{story.title}</CardTitle>
+            <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
+              <Collapsible.Trigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                >
+                  {titleTranslationOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </Collapsible.Trigger>
+            </Collapsible.Root>
+          </div>
+          <Collapsible.Root open={titleTranslationOpen}>
+            <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
+              {translationQueries[0].isPending ? (
+                <p className="text-sm text-muted-foreground">Loading translation...</p>
+              ) : translationQueries[0].error ? (
+                <p className="text-sm text-destructive">Failed to load translation</p>
+              ) : (
+                <p className="text-sm italic">{translationQueries[0].data}</p>
+              )}
+            </Collapsible.Content>
+          </Collapsible.Root>
         </div>
       </CardHeader>
       <CardContent>
@@ -147,18 +202,26 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
               </div>
               <Collapsible.Root open={sentence.isOpen}>
                 <Collapsible.Content className="pt-2 pl-4 border-l-2 border-primary/20">
-                  {translationQueries[index].isPending ? (
+                  {translationQueries[index + 1].isPending ? (
                     <p className="text-sm text-muted-foreground">Loading translation...</p>
-                  ) : translationQueries[index].error ? (
+                  ) : translationQueries[index + 1].error ? (
                     <p className="text-sm text-destructive">Failed to load translation</p>
                   ) : (
-                    <p className="text-sm italic">{translationQueries[index].data}</p>
+                    <p className="text-sm italic">{translationQueries[index + 1].data}</p>
                   )}
                 </Collapsible.Content>
               </Collapsible.Root>
             </div>
           ))}
         </div>
+        <Button 
+          onClick={() => saveStory.mutate()} 
+          className="w-full mt-6"
+          disabled={saveStory.isPending}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save Story
+        </Button>
       </CardContent>
     </Card>
   );
