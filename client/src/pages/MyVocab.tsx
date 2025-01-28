@@ -64,7 +64,7 @@ export default function MyVocab() {
         ) : (
           <Tabs defaultValue={decks?.[0]?.id?.toString()}>
             <TabsList className="relative w-full mb-4 overflow-hidden">
-              <div className="overflow-x-auto flex">
+              <div className="overflow-x-auto flex [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {decks?.map((deck) => (
                   <TabsTrigger 
                     key={deck.id} 
