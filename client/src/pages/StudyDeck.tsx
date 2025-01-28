@@ -131,7 +131,7 @@ export default function StudyDeck({ params }: StudyDeckProps) {
                 direction === "right" && "bg-green-500/10"
               )}
               drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={1}
               onDragEnd={onDragEnd}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
