@@ -30,6 +30,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   const { toast } = useToast();
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [selectedWord, setSelectedWord] = useState<WordInfo | null>(null);
+  const [showWordModal, setShowWordModal] = useState(false);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
     const matches = story.content.match(/(?:[^.!?"]+|"[^"]*"[^.!?]*)+[.!?]+/g) || [];
     return matches.map(sentence => ({
@@ -89,6 +90,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     },
     onSuccess: (data) => {
       setSelectedWord(data);
+      setShowWordModal(true);
+      console.log('Word info received:', data); // Debug log
     },
     onError: () => {
       toast({
@@ -100,7 +103,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   });
 
   const handleWordClick = (word: string, context: string) => {
-    // Clean the word by removing any punctuation
     const cleanWord = word.replace(/[^a-zA-Z']/g, '').toLowerCase();
     if (cleanWord) {
       console.log('Clicked word:', cleanWord); // Debug log
@@ -261,8 +263,11 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           translation={selectedWord.translation}
           partOfSpeech={selectedWord.partOfSpeech}
           context={selectedWord.context}
-          isOpen={true}
-          onClose={() => setSelectedWord(null)}
+          isOpen={showWordModal}
+          onClose={() => {
+            setShowWordModal(false);
+            setSelectedWord(null);
+          }}
         />
       )}
     </div>
