@@ -41,8 +41,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     }));
   });
 
-  const storedLanguage = localStorage.getItem("storyLanguage") || "English";
-
   const translationQueries = useQueries({
     queries: [
       {
@@ -53,13 +51,12 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               sentence: story.title,
-              targetLanguage: storedLanguage
+              targetLanguage: 'English' // Force English translations
             }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Translation error:', errorText);
             throw new Error(errorText || 'Translation failed');
           }
 
@@ -77,13 +74,12 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               sentence: sentence.original,
-              targetLanguage: storedLanguage
+              targetLanguage: 'English' // Force English translations
             }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Translation error:', errorText);
             throw new Error(errorText || 'Translation failed');
           }
 
@@ -238,19 +234,21 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <div className="flex flex-col border-b pb-4">
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-3xl font-bold">{story.title}</h1>
+        <div className="border-b pb-4">
+          <h1 className="text-3xl font-bold">{story.title}</h1>
+          <div className="mt-2">
             <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
-              <Collapsible.Trigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  {titleTranslationOpen ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </Collapsible.Trigger>
+              <div className="flex items-center gap-2">
+                <Collapsible.Trigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    {titleTranslationOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </Collapsible.Trigger>
+              </div>
               <Collapsible.Content className="pl-4 border-l-2 border-primary/20 mt-2">
                 {translationQueries[0].isPending || refreshingIndex === 0 ? (
                   <p className="text-sm text-muted-foreground">Loading translation...</p>
