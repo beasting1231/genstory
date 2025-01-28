@@ -195,19 +195,28 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
           <div key={index} className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <p className="text-lg leading-relaxed flex-grow">
-                {sentence.original.split(/\b/).map((part, i) => {
-                  if (!/[a-zA-Z']+/.test(part)) {
+                {sentence.original.split(/(\s+|[,.!?;:()]|\b)/).map((part, i) => {
+                  // If the part is just whitespace or punctuation, render it directly
+                  if (!part.trim() || /^[,.!?;:()]+$/.test(part)) {
                     return part;
                   }
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleWordClick(part, sentence.original)}
-                      className="hover:text-primary hover:underline focus:outline-none focus:text-primary focus:underline cursor-pointer px-0.5"
-                    >
-                      {part}
-                    </button>
-                  );
+                  // If it's a word, make it clickable
+                  if (/^[A-Za-z']+$/.test(part)) {
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleWordClick(part, sentence.original);
+                        }}
+                        className="hover:text-primary hover:underline focus:outline-none focus:text-primary focus:underline cursor-pointer px-0.5 inline-block"
+                      >
+                        {part}
+                      </button>
+                    );
+                  }
+                  return part;
                 })}
               </p>
               <Collapsible.Root open={sentence.isOpen} onOpenChange={() => toggleTranslation(index)}>
