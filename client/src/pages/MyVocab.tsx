@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { SelectDeck, SelectVocab } from "@db/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { Plus, Trash2, Edit, BookOpen } from "lucide-react";
 import { useState, useRef, TouchEvent } from "react";
 import { CreateDeckModal } from "@/components/ui/create-deck-modal";
 import { AddWordModal } from "@/components/ui/add-word-modal";
@@ -18,6 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { useLocation } from "wouter";
 
 interface DeleteConfirmation {
   isOpen: boolean;
@@ -26,6 +27,7 @@ interface DeleteConfirmation {
 }
 
 export default function MyVocab() {
+  const [, setLocation] = useLocation();
   const [showCreateDeck, setShowCreateDeck] = useState(false);
   const [showAddWord, setShowAddWord] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation>({
@@ -164,6 +166,15 @@ export default function MyVocab() {
 
               {decks?.map((deck) => (
                 <TabsContent key={deck.id} value={deck.id.toString()}>
+                  <div className="flex justify-end mb-4">
+                    <Button
+                      onClick={() => setLocation(`/study/${deck.id}`)}
+                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500"
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Study Deck
+                    </Button>
+                  </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     {deck.vocabulary?.map((item, index) => (
                       <div key={item.id} className="relative overflow-hidden rounded-lg">
