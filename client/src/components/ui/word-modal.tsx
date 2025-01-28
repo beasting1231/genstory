@@ -15,7 +15,6 @@ interface WordModalProps {
   translation: string;
   partOfSpeech: string;
   context?: string;
-  note?: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -25,7 +24,6 @@ export function WordModal({
   translation,
   partOfSpeech,
   context,
-  note,
   isOpen,
   onClose,
 }: WordModalProps) {
@@ -81,12 +79,6 @@ export function WordModal({
             <span className="font-medium">Part of Speech:</span>
             <p className="mt-1 capitalize">{partOfSpeech}</p>
           </div>
-          {note && (
-            <div>
-              <span className="font-medium">Note:</span>
-              <p className="mt-1 text-sm text-muted-foreground">{note}</p>
-            </div>
-          )}
           {context && (
             <div>
               <span className="font-medium">Context:</span>
