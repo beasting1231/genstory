@@ -22,8 +22,8 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   const { toast } = useToast();
   const [titleTranslationOpen, setTitleTranslationOpen] = useState(false);
   const [sentences, setSentences] = useState<SentenceTranslation[]>(() => {
-    // Custom split that keeps quoted text together
-    const matches = story.content.match(/[^.!?"]+[.!?"]+\s*(?:[^"\.!?]+[\.!?]+)?/g) || [];
+    // Custom split that keeps quoted text together including opening quotes
+    const matches = story.content.match(/(?:[^.!?]|"[^"]*")+[.!?]+/g) || [];
     return matches.map(sentence => ({
       original: sentence.trim(),
       isOpen: false,
