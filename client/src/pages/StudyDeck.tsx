@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { SelectDeck, SelectVocab } from "@db/schema";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,14 @@ export default function StudyDeck({ params }: StudyDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [direction, setDirection] = useState<null | "left" | "right">(null);
+
+  const dragX = useMotionValue(0);
+  const swipeProgress = useTransform(dragX, [-200, 0, 200], [-1, 0, 1]);
+  const cardBackground = useTransform(
+    swipeProgress,
+    [-1, 0, 1],
+    ["rgba(239, 68, 68, 0.2)", "rgba(0, 0, 0, 0)", "rgba(34, 197, 94, 0.2)"]
+  );
 
   const { data: decks } = useQuery<SelectDeck[]>({
     queryKey: ["/api/decks"],
@@ -128,14 +136,16 @@ export default function StudyDeck({ params }: StudyDeckProps) {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
-              className={cn(
-                "absolute inset-0 cursor-grab active:cursor-grabbing",
-                direction === "left" && "bg-red-500/10",
-                direction === "right" && "bg-green-500/10"
-              )}
+              className="absolute inset-0 cursor-grab active:cursor-grabbing"
+              style={{
+                background: cardBackground,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                zIndex: vocabulary.length - currentIndex,
+              }}
               drag="x"
               dragElastic={0.7}
               onDragEnd={onDragEnd}
+              dragConstraints={{ left: 0, right: 0 }}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ 
@@ -143,10 +153,7 @@ export default function StudyDeck({ params }: StudyDeckProps) {
                 x: direction === "left" ? -300 : 300,
                 transition: { duration: 0.2 }
               }}
-              style={{
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                zIndex: vocabulary.length - currentIndex
-              }}
+              style={{ x: dragX }}
             >
               <div
                 className="w-full h-full"
