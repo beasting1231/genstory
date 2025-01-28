@@ -23,7 +23,11 @@ export default function StudyDeck({ params }: StudyDeckProps) {
   const cardBackground = useTransform(
     swipeProgress,
     [-1, 0, 1],
-    ["rgba(239, 68, 68, 0.2)", "rgba(0, 0, 0, 0)", "rgba(34, 197, 94, 0.2)"]
+    [
+      "rgba(239, 68, 68, 0.2)", // Red for "don't remember"
+      "rgba(255, 255, 255, 0)", // Transparent for neutral
+      "rgba(34, 197, 94, 0.2)", // Green for "remember"
+    ]
   );
 
   const { data: decks } = useQuery<SelectDeck[]>({
@@ -48,7 +52,6 @@ export default function StudyDeck({ params }: StudyDeckProps) {
         setDirection(null);
       }, 200);
     } else {
-      // Animate back to center
       setDirection(null);
     }
   };
@@ -144,14 +147,14 @@ export default function StudyDeck({ params }: StudyDeckProps) {
                 zIndex: vocabulary.length - currentIndex,
                 display: "flex",
                 justifyContent: "center",
-                alignItems: "center", //Added for centering
+                alignItems: "center",
               }}
               drag="x"
               dragElastic={0.7}
               onDragEnd={onDragEnd}
               dragConstraints={{ left: 0, right: 0 }}
-              initial={{ opacity: 0, scale: 0.8, x: 0, y:0 }}  //Added y:0 for centering
-              animate={{ opacity: 1, scale: 1, x: 0, y:0, transition: { duration: 0.3 }}} //Added transition
+              initial={{ opacity: 0, scale: 0.8, x: 0, y: 0 }}
+              animate={{ opacity: 1, scale: 1, x: 0, y: 0, transition: { duration: 0.3 }}}
               exit={{ 
                 opacity: 0,
                 x: direction === "left" ? -300 : 300,
