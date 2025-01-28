@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { SelectDeck } from "@db/schema";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useState, useRef, TouchEvent } from "react";
 import { CreateDeckModal } from "@/components/ui/create-deck-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +32,7 @@ export default function MyVocab() {
     vocabId: null,
   });
   const touchStartX = useRef<number | null>(null);
+  const [swipedCards, setSwipedCards] = useState<{ [key: number]: number }>({});
   const queryClient = useQueryClient();
 
   const { data: decks, isLoading: decksLoading, error: decksError } = useQuery<SelectDeck[]>({
@@ -53,8 +54,21 @@ export default function MyVocab() {
     },
   });
 
-  const handleTouchStart = (e: TouchEvent) => {
+  const handleTouchStart = (e: TouchEvent, vocabId: number) => {
     touchStartX.current = e.touches[0].clientX;
+    setSwipedCards(prev => ({ ...prev, [vocabId]: 0 }));
+  };
+
+  const handleTouchMove = (e: TouchEvent, vocabId: number) => {
+    if (touchStartX.current === null) return;
+
+    const touchCurrentX = e.touches[0].clientX;
+    const swipeDistance = touchStartX.current - touchCurrentX;
+
+    // Limit swipe to maximum of 100px
+    const limitedSwipeDistance = Math.min(Math.max(swipeDistance, 0), 100);
+
+    setSwipedCards(prev => ({ ...prev, [vocabId]: limitedSwipeDistance }));
   };
 
   const handleTouchEnd = (e: TouchEvent, deckId: number, vocabId: number) => {
@@ -63,8 +77,7 @@ export default function MyVocab() {
     const touchEndX = e.changedTouches[0].clientX;
     const swipeDistance = touchStartX.current - touchEndX;
 
-    // If swipe distance is more than 100px, show delete confirmation
-    if (swipeDistance > 100) {
+    if (swipeDistance > 50) {
       setDeleteConfirmation({
         isOpen: true,
         deckId,
@@ -72,6 +85,8 @@ export default function MyVocab() {
       });
     }
 
+    // Reset swipe state
+    setSwipedCards(prev => ({ ...prev, [vocabId]: 0 }));
     touchStartX.current = null;
   };
 
@@ -142,18 +157,31 @@ export default function MyVocab() {
                 <TabsContent key={deck.id} value={deck.id.toString()}>
                   <div className="grid gap-4 md:grid-cols-3">
                     {deck.vocabulary?.map((item, index) => (
-                      <Card 
-                        key={item.id} 
-                        className="shadow-md transition-transform duration-200 touch-pan-y"
-                        onTouchStart={handleTouchStart}
-                        onTouchEnd={(e) => handleTouchEnd(e, deck.id, item.id)}
-                      >
-                        <CardContent className="pt-6 px-4">
-                          <p className="text-xl font-bold text-left">
-                            {index + 1}. {item.word}
-                          </p>
-                        </CardContent>
-                      </Card>
+                      <div key={item.id} className="relative overflow-hidden">
+                        <div
+                          className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4"
+                        >
+                          <Trash2 className="h-5 w-5 text-white" />
+                        </div>
+                        <Card 
+                          className={cn(
+                            "shadow-md transition-transform duration-200 touch-pan-y relative bg-background",
+                            "transform transition-transform duration-200 ease-out"
+                          )}
+                          style={{
+                            transform: `translateX(-${swipedCards[item.id] || 0}px)`,
+                          }}
+                          onTouchStart={(e) => handleTouchStart(e, item.id)}
+                          onTouchMove={(e) => handleTouchMove(e, item.id)}
+                          onTouchEnd={(e) => handleTouchEnd(e, deck.id, item.id)}
+                        >
+                          <CardContent className="pt-6 px-4">
+                            <p className="text-xl font-bold text-left">
+                              {index + 1}. {item.word}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
                     ))}
                   </div>
                 </TabsContent>
