@@ -204,7 +204,12 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
   const retranslate = useCallback(async (index: number) => {
     try {
       const query = translationQueries[index];
+
+      // Force loading state before retranslation
+      query.state.status = 'pending';
+
       await query.refetch();
+
       toast({
         title: "Success",
         description: "Translation updated",
@@ -240,17 +245,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2 border-b pb-4">
           <h1 className="text-3xl font-bold flex-grow">{story.title}</h1>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              disabled={translationQueries[0].isPending}
-              onClick={() => retranslate(0)}
-            >
-              <RotateCw className={`h-4 w-4 ${translationQueries[0].isPending ? 'animate-spin' : ''}`} />
-              <span className="sr-only">Retranslate title</span>
-            </Button>
+          <div className="flex flex-col items-center gap-2">
             <Collapsible.Root open={titleTranslationOpen} onOpenChange={toggleTitleTranslation}>
               <Collapsible.Trigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -262,17 +257,31 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                 </Button>
               </Collapsible.Trigger>
               <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
-                {translationQueries[0].isPending ? (
-                  <p className="text-sm text-muted-foreground">Loading translation...</p>
-                ) : translationQueries[0].error ? (
-                  <p className="text-sm text-destructive">
-                    {translationQueries[0].error instanceof Error
-                      ? translationQueries[0].error.message
-                      : 'Failed to load translation'}
-                  </p>
-                ) : (
-                  <p className="text-sm italic">{translationQueries[0].data}</p>
-                )}
+                <div className="flex flex-col items-end gap-2">
+                  {titleTranslationOpen && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      disabled={translationQueries[0].isPending}
+                      onClick={() => retranslate(0)}
+                    >
+                      <RotateCw className={`h-4 w-4 ${translationQueries[0].isPending ? 'animate-spin' : ''}`} />
+                      <span className="sr-only">Retranslate title</span>
+                    </Button>
+                  )}
+                  {translationQueries[0].isPending ? (
+                    <p className="text-sm text-muted-foreground">Loading translation...</p>
+                  ) : translationQueries[0].error ? (
+                    <p className="text-sm text-destructive">
+                      {translationQueries[0].error instanceof Error
+                        ? translationQueries[0].error.message
+                        : 'Failed to load translation'}
+                    </p>
+                  ) : (
+                    <p className="text-sm italic">{translationQueries[0].data}</p>
+                  )}
+                </div>
               </Collapsible.Content>
             </Collapsible.Root>
           </div>
@@ -296,20 +305,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                     </span>
                   ))}
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    disabled={translationQueries[index + 1].isPending}
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent triggering Collapsible
-                      retranslate(index + 1);
-                    }}
-                  >
-                    <RotateCw className={`h-4 w-4 ${translationQueries[index + 1].isPending ? 'animate-spin' : ''}`} />
-                    <span className="sr-only">Retranslate sentence</span>
-                  </Button>
+                <div className="flex flex-col items-center gap-2">
                   <Collapsible.Trigger asChild>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       {sentence.isOpen ? (
@@ -319,20 +315,37 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                       )}
                     </Button>
                   </Collapsible.Trigger>
+                  {sentence.isOpen && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      disabled={translationQueries[index + 1].isPending}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        retranslate(index + 1);
+                      }}
+                    >
+                      <RotateCw className={`h-4 w-4 ${translationQueries[index + 1].isPending ? 'animate-spin' : ''}`} />
+                      <span className="sr-only">Retranslate sentence</span>
+                    </Button>
+                  )}
                 </div>
               </div>
               <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
-                {translationQueries[index + 1].isPending ? (
-                  <p className="text-sm text-muted-foreground">Loading translation...</p>
-                ) : translationQueries[index + 1].error ? (
-                  <p className="text-sm text-destructive">
-                    {translationQueries[index + 1].error instanceof Error
-                      ? translationQueries[index + 1].error.message
-                      : 'Failed to load translation'}
-                  </p>
-                ) : (
-                  <p className="text-sm italic">{translationQueries[index + 1].data}</p>
-                )}
+                <div className="flex flex-col items-end gap-2">
+                  {translationQueries[index + 1].isPending ? (
+                    <p className="text-sm text-muted-foreground">Loading translation...</p>
+                  ) : translationQueries[index + 1].error ? (
+                    <p className="text-sm text-destructive">
+                      {translationQueries[index + 1].error instanceof Error
+                        ? translationQueries[index + 1].error.message
+                        : 'Failed to load translation'}
+                    </p>
+                  ) : (
+                    <p className="text-sm italic">{translationQueries[index + 1].data}</p>
+                  )}
+                </div>
               </Collapsible.Content>
             </div>
           </Collapsible.Root>
