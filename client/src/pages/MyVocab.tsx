@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { CreateDeckModal } from "@/components/ui/create-deck-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export default function MyVocab() {
   const [showCreateDeck, setShowCreateDeck] = useState(false);
@@ -62,15 +63,19 @@ export default function MyVocab() {
           </Card>
         ) : (
           <Tabs defaultValue={decks?.[0]?.id?.toString()}>
-            <div className="overflow-x-auto">
-              <TabsList className="w-max min-w-full inline-flex justify-start mb-4 px-4">
+            <TabsList className="relative w-full mb-4 overflow-hidden">
+              <div className="overflow-x-auto flex">
                 {decks?.map((deck) => (
-                  <TabsTrigger key={deck.id} value={deck.id.toString()}>
+                  <TabsTrigger 
+                    key={deck.id} 
+                    value={deck.id.toString()}
+                    className="shrink-0"
+                  >
                     {deck.name}
                   </TabsTrigger>
                 ))}
-              </TabsList>
-            </div>
+              </div>
+            </TabsList>
 
             {decks?.map((deck) => (
               <TabsContent key={deck.id} value={deck.id.toString()}>
