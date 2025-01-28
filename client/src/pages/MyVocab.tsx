@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { useState, useRef, TouchEvent } from "react";
 import { CreateDeckModal } from "@/components/ui/create-deck-modal";
+import { AddWordModal } from "@/components/ui/add-word-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
@@ -26,6 +27,7 @@ interface DeleteConfirmation {
 
 export default function MyVocab() {
   const [showCreateDeck, setShowCreateDeck] = useState(false);
+  const [showAddWord, setShowAddWord] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation>({
     isOpen: false,
     deckId: null,
@@ -117,10 +119,16 @@ export default function MyVocab() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl md:text-3xl font-bold">My Vocabulary</h1>
-          <Button onClick={() => setShowCreateDeck(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Deck
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowAddWord(true)} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Word
+            </Button>
+            <Button onClick={() => setShowCreateDeck(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Deck
+            </Button>
+          </div>
         </div>
 
         {decks?.length === 0 ? (
@@ -196,6 +204,12 @@ export default function MyVocab() {
         <CreateDeckModal 
           open={showCreateDeck} 
           onOpenChange={setShowCreateDeck} 
+        />
+
+        <AddWordModal
+          open={showAddWord}
+          onOpenChange={setShowAddWord}
+          decks={decks || []}
         />
 
         <AlertDialog 
