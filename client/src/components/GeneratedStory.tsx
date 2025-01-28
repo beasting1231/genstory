@@ -3,7 +3,7 @@ import { useMutation, useQueries } from "@tanstack/react-query";
 import { StoryResponse } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Save, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { WordModal } from "@/components/ui/word-modal";
 
@@ -47,7 +47,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       {
         queryKey: ['translation', story.title],
         queryFn: async () => {
-          console.log('Translating title:', story.title); // Debug log
+          console.log('Translating title:', story.title);
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -59,12 +59,12 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Translation error:', errorText); // Debug log
+            console.error('Translation error:', errorText);
             throw new Error(errorText || 'Translation failed');
           }
 
           const data = await response.json();
-          console.log('Translation response:', data); // Debug log
+          console.log('Translation response:', data);
           return data.translation;
         },
         enabled: false,
@@ -73,7 +73,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       ...sentences.map((sentence) => ({
         queryKey: ['translation', sentence.original],
         queryFn: async () => {
-          console.log('Translating sentence:', sentence.original); // Debug log
+          console.log('Translating sentence:', sentence.original);
           const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -85,12 +85,12 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Translation error:', errorText); // Debug log
+            console.error('Translation error:', errorText);
             throw new Error(errorText || 'Translation failed');
           }
 
           const data = await response.json();
-          console.log('Translation response:', data); // Debug log
+          console.log('Translation response:', data);
           return data.translation;
         },
         enabled: false,
@@ -99,9 +99,49 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     ],
   });
 
+  const handleWordClick = useCallback((word: string, context: string) => {
+    const cleanWord = word.replace(/[^\p{L}']/gu, '').trim();
+    if (cleanWord) {
+      console.log('Clicked word:', cleanWord);
+      getWordInfo.mutate({ word: cleanWord, context });
+    }
+  }, []);
+
+  const toggleTitleTranslation = useCallback(async () => {
+    setTitleTranslationOpen(prev => !prev);
+    if (!titleTranslationOpen) {
+      console.log('Triggering title translation');
+      await translationQueries[0].refetch();
+    }
+  }, [titleTranslationOpen, translationQueries]);
+
+  const toggleTranslation = useCallback(async (index: number) => {
+    setSentences(prev => {
+      const newSentences = [...prev];
+      newSentences[index] = {
+        ...newSentences[index],
+        isOpen: !newSentences[index].isOpen,
+      };
+      return newSentences;
+    });
+
+    try {
+      if (!sentences[index].isOpen) {
+        console.log(`Triggering translation for sentence ${index}`);
+        await translationQueries[index + 1].refetch();
+      }
+    } catch (error) {
+      console.error(`Error toggling translation for sentence ${index}:`, error);
+      toast({
+        title: "Error",
+        description: "Failed to load translation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [sentences, translationQueries, toast]);
+
   const getWordInfo = useMutation({
     mutationFn: async ({ word, context }: { word: string; context: string }) => {
-      console.log('Getting word info for:', word); // Debug log
       const response = await fetch("/api/word-info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,7 +157,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     onSuccess: (data) => {
       setSelectedWord(data);
       setShowWordModal(true);
-      console.log('Word info received:', data); // Debug log
     },
     onError: () => {
       toast({
@@ -127,34 +166,6 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
       });
     },
   });
-
-  const handleWordClick = (word: string, context: string) => {
-    const cleanWord = word.replace(/[^\p{L}']/gu, '').trim();
-    if (cleanWord) {
-      console.log('Clicked word:', cleanWord); // Debug log
-      getWordInfo.mutate({ word: cleanWord, context });
-    }
-  };
-
-  const toggleTitleTranslation = async () => {
-    setTitleTranslationOpen(!titleTranslationOpen);
-    if (!titleTranslationOpen) {
-      console.log('Triggering title translation'); // Debug log
-      await translationQueries[0].refetch();
-    }
-  };
-
-  const toggleTranslation = async (index: number) => {
-    setSentences(prev => {
-      const newSentences = [...prev];
-      newSentences[index].isOpen = !newSentences[index].isOpen;
-      return newSentences;
-    });
-
-    if (!sentences[index].isOpen) {
-      await translationQueries[index + 1].refetch();
-    }
-  };
 
   const saveStory = useMutation({
     mutationFn: async () => {
@@ -190,7 +201,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
     },
   });
 
-  const renderWord = (word: string, context: string) => {
+  const renderWord = useCallback((word: string, context: string) => {
     if (!word.trim()) return " ";
     if (/^[,.!?;:()]+$/.test(word)) return word;
 
@@ -204,7 +215,7 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
         {word}
       </span>
     );
-  };
+  }, [handleWordClick]);
 
   return (
     <div className="space-y-6">
@@ -221,30 +232,28 @@ export function GeneratedStory({ story, readingLevel, wordCount }: GeneratedStor
                 )}
               </Button>
             </Collapsible.Trigger>
+            <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
+              {translationQueries[0].isPending ? (
+                <p className="text-sm text-muted-foreground">Loading translation...</p>
+              ) : translationQueries[0].error ? (
+                <p className="text-sm text-destructive">
+                  {translationQueries[0].error instanceof Error 
+                    ? translationQueries[0].error.message 
+                    : 'Failed to load translation'}
+                </p>
+              ) : (
+                <p className="text-sm italic">{translationQueries[0].data}</p>
+              )}
+            </Collapsible.Content>
           </Collapsible.Root>
         </div>
-        <Collapsible.Root open={titleTranslationOpen}>
-          <Collapsible.Content className="pl-4 border-l-2 border-primary/20">
-            {translationQueries[0].isPending ? (
-              <p className="text-sm text-muted-foreground">Loading translation...</p>
-            ) : translationQueries[0].error ? (
-              <p className="text-sm text-destructive">
-                {translationQueries[0].error instanceof Error 
-                  ? translationQueries[0].error.message 
-                  : 'Failed to load translation'}
-              </p>
-            ) : (
-              <p className="text-sm italic">{translationQueries[0].data}</p>
-            )}
-          </Collapsible.Content>
-        </Collapsible.Root>
       </div>
 
       <div className="space-y-6">
         {sentences.map((sentence, index) => (
           <Collapsible.Root 
-            key={index} 
-            open={sentence.isOpen} 
+            key={index}
+            open={sentence.isOpen}
             onOpenChange={() => toggleTranslation(index)}
           >
             <div className="space-y-2">
